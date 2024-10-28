@@ -44,8 +44,6 @@ def generate_random_line_plots(num_plots):
 
 # Input: Number of plots to generate
 #num_plots = int(input("Enter the number of random line plots to generate: "))
-num_plots = 1
-generate_random_line_plots(num_plots)
 
 def image_to_matrix(image_path, new_size=(200, 200)):
     # Load the image using imageio
@@ -71,15 +69,14 @@ def image_to_matrix(image_path, new_size=(200, 200)):
     return img_resized
 
 # Example usage
+num_plots = 1
+generate_random_line_plots(num_plots)
 image_path = 'random_line_function_1.jpg'  # Replace with your image file name
 matrix = image_to_matrix(image_path, new_size=(200, 200)) 
 print("Resized Matrix shape:", matrix.shape)
 D.append(matrix)
-# Print the shape of the matrix and a portion of it
-#print(matrix)
-
+print(matrix)
 plt.figure()
 plt.imshow(matrix, interpolation='nearest')
-plt.show()
 plt.savefig(f'image.jpg', format='jpg')
 

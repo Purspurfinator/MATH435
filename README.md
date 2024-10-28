@@ -1,0 +1,1 @@
+generateGraphs.py generates 13 different types of graphs, the code that generates them randomely needs some work. It will output image files of each graph for visual inspection organized in different folders by the graph type, and it generates a single file with all of the graphs stored as matrices. That file can be fed into the graphLearningModel.py

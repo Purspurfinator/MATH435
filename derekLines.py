@@ -43,6 +43,41 @@ def generate_random_line_plots(num_plots):
         # Close the plot to free memory
         plt.close()
 
+def generate_random_quad_plots(num_plots):
+    for i in range(num_plots):
+
+        # Generate random slope (m) and intercept (b)
+        a = np.random.uniform(-5, 5)  # Random slope
+        b = np.random.uniform(-5, 5)   # Random intercept
+        c = np.random.uniform(-5, 5)   # Random intercept
+
+
+        # Generate x values from -5 to 5
+        x_values = np.linspace(-5, 5, 100)
+        # Calculate corresponding y values using the linear equation
+        y_values = x_values**2 * a + b * x_values + c
+
+        # Create the plot
+        plt.figure(figsize=(8, 8))
+        plt.plot(x_values, y_values, color='b', linestyle='-')
+
+        # Set the limits of the plot
+        plt.xlim(-5, 5)
+        plt.ylim(-5, 5)
+
+        plt.xticks([])
+        plt.yticks([])
+
+        # Add horizontal and vertical lines at zero
+        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+
+        # Save the plot as a JPG image
+        plt.savefig(f'random_quad_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+
+        # Close the plot to free memory
+        plt.close()
+
 
 def image_to_matrix(image_path, new_size=(200, 200)):
     # Load the image using imageio
@@ -69,9 +104,9 @@ def image_to_matrix(image_path, new_size=(200, 200)):
 
 # Example usage
 #num_plots = int(input("Enter the number of random line plots to generate: "))
-number = int(input("Enter amount of graphs to generate: "))
-for i in range(number):
-    generate_random_line_plots(1)  
+#number = int(input("Enter amount of graphs to generate: "))
+for i in range(1):
+    generate_random_line_plots(1) 
     image_path = 'random_line_function_1.jpg'  # Replace with your image file name
     matrix = image_to_matrix(image_path, new_size=(200, 200)) 
     print("Resized Matrix shape:", matrix.shape)
@@ -82,5 +117,20 @@ for i in range(number):
     os.remove("random_line_function_1.jpg")
     os.remove("image.jpg")
     L.append("line")
+#print(len(D))
+#print(L)
+
+for i in range(1):
+    generate_random_quad_plots(1)  
+    image_path = 'random_quad_function_1.jpg'  # Replace with your image file name
+    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
+    print("Resized Matrix shape:", matrix.shape)
+    D.append(matrix)
+    plt.figure()
+    plt.imshow(matrix, interpolation='nearest')
+    plt.savefig(f'image.jpg', format='jpg')
+    os.remove("random_quad_function_1.jpg")
+    os.remove("image.jpg")
+    L.append("quad")
 #print(len(D))
 #print(L)

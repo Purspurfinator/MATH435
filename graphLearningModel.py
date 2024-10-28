@@ -4,51 +4,38 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 import matplotlib.pyplot as plt
-import os
+from sklearn.model_selection import train_test_split
 
 # Define paths
-dataset_path = 'dataset'
-train_dir = f'{dataset_path}/train'
-val_dir = f'{dataset_path}/val'
-test_dir = f'{dataset_path}/test'
+dataset_path = 'dataset/graphs_dataset.npz'
 
-# Image parameters
-img_height, img_width = 150, 150
-batch_size = 32
+# Load the dataset
+data = np.load(dataset_path)
+X = data['data']
+y = data['labels']
 
-# Load and preprocess the data
-def load_data(data_dir):
-    data = []
-    labels = []
-    class_names = sorted(os.listdir(data_dir))
-    for label, class_name in enumerate(class_names):
-        class_dir = os.path.join(data_dir, class_name)
-        for file_name in os.listdir(class_dir):
-            file_path = os.path.join(class_dir, file_name)
-            matrix = np.load(file_path)
-            data.append(matrix)
-            labels.append(label)
-    data = np.array(data)
-    labels = np.array(labels)
-    return data, labels, class_names
+# Encode labels as integers
+label_to_index = {label: idx for idx, label in enumerate(np.unique(y))}
+y_encoded = np.array([label_to_index[label] for label in y])
 
-train_data, train_labels, class_names = load_data(train_dir)
-val_data, val_labels, _ = load_data(val_dir)
-test_data, test_labels, _ = load_data(test_dir)
+# Split the data into training, validation, and test sets
+X_train, X_temp, y_train, y_temp = train_test_split(X, y_encoded, test_size=0.3, random_state=42)
+X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
 
 # Normalize the data
-train_data = train_data / 255.0
-val_data = val_data / 255.0
-test_data = test_data / 255.0
+X_train = X_train / 255.0
+X_val = X_val / 255.0
+X_test = X_test / 255.0
 
 # Convert labels to categorical
-train_labels = tf.keras.utils.to_categorical(train_labels, num_classes=len(class_names))
-val_labels = tf.keras.utils.to_categorical(val_labels, num_classes=len(class_names))
-test_labels = tf.keras.utils.to_categorical(test_labels, num_classes=len(class_names))
+num_classes = len(label_to_index)
+y_train = tf.keras.utils.to_categorical(y_train, num_classes=num_classes)
+y_val = tf.keras.utils.to_categorical(y_val, num_classes=num_classes)
+y_test = tf.keras.utils.to_categorical(y_test, num_classes=num_classes)
 
 # Build the model
 model = Sequential([
-    Conv2D(32, (3, 3), activation='relu', input_shape=(img_height, img_width, 1)),
+    Conv2D(32, (3, 3), activation='relu', input_shape=(X_train.shape[1], X_train.shape[2], 1)),
     MaxPooling2D((2, 2)),
     Conv2D(64, (3, 3), activation='relu'),
     MaxPooling2D((2, 2)),
@@ -57,7 +44,7 @@ model = Sequential([
     Flatten(),
     Dense(512, activation='relu'),
     Dropout(0.5),
-    Dense(len(class_names), activation='softmax')
+    Dense(num_classes, activation='softmax')
 ])
 
 # Compile the model
@@ -69,10 +56,10 @@ model_checkpoint = ModelCheckpoint('best_model.h5', save_best_only=True, monitor
 
 # Train the model
 history = model.fit(
-    train_data, train_labels,
-    validation_data=(val_data, val_labels),
+    X_train[..., np.newaxis], y_train,
+    validation_data=(X_val[..., np.newaxis], y_val),
     epochs=50,
-    batch_size=batch_size,
+    batch_size=32,
     callbacks=[early_stopping, model_checkpoint]
 )
 
@@ -85,7 +72,7 @@ plt.legend(loc='lower right')
 plt.show()
 
 # Evaluate the model on the test set
-test_loss, test_acc = model.evaluate(test_data, test_labels)
+test_loss, test_acc = model.evaluate(X_test[..., np.newaxis], y_test)
 print(f'Test accuracy: {test_acc:.2f}')
 
 # Save the model

@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import imageio.v2 as imageio
+import os
 
 D = []
 L = []
@@ -42,8 +43,6 @@ def generate_random_line_plots(num_plots):
         # Close the plot to free memory
         plt.close()
 
-# Input: Number of plots to generate
-#num_plots = int(input("Enter the number of random line plots to generate: "))
 
 def image_to_matrix(image_path, new_size=(200, 200)):
     # Load the image using imageio
@@ -69,14 +68,19 @@ def image_to_matrix(image_path, new_size=(200, 200)):
     return img_resized
 
 # Example usage
-num_plots = 1
-generate_random_line_plots(num_plots)
-image_path = 'random_line_function_1.jpg'  # Replace with your image file name
-matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-print("Resized Matrix shape:", matrix.shape)
-D.append(matrix)
-print(matrix)
-plt.figure()
-plt.imshow(matrix, interpolation='nearest')
-plt.savefig(f'image.jpg', format='jpg')
-
+#num_plots = int(input("Enter the number of random line plots to generate: "))
+number = int(input("Enter amount of graphs to generate: "))
+for i in range(number):
+    generate_random_line_plots(1)  
+    image_path = 'random_line_function_1.jpg'  # Replace with your image file name
+    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
+    print("Resized Matrix shape:", matrix.shape)
+    D.append(matrix)
+    plt.figure()
+    plt.imshow(matrix, interpolation='nearest')
+    plt.savefig(f'image.jpg', format='jpg')
+    os.remove("random_line_function_1.jpg")
+    os.remove("image.jpg")
+    L.append("line")
+#print(len(D))
+#print(L)

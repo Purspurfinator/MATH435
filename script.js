@@ -16,9 +16,20 @@ canvas.addEventListener('mouseup', stopDrawing);
 canvas.addEventListener('mousemove', draw);
 
 // Touch events
-canvas.addEventListener('touchstart', (e) => startDrawing(e.touches[0]));
-canvas.addEventListener('touchend', stopDrawing);
-canvas.addEventListener('touchmove', (e) => draw(e.touches[0]));
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    startDrawing(e.touches[0]);
+});
+
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    draw(e.touches[0]);
+});
+
+canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    stopDrawing();
+});
 
 function startDrawing(e) {
     drawing = true;

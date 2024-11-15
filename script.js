@@ -33,11 +33,13 @@ canvas.addEventListener('touchend', (e) => {
 
 function startDrawing(e) {
     drawing = true;
+    document.body.classList.add('no-scroll');
     draw(e);
 }
 
 function stopDrawing() {
     drawing = false;
+    document.body.classList.remove('no-scroll');
     ctx.beginPath();
 }
 
@@ -58,3 +60,8 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     alert('Drawing submitted successfully!');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
+
+/* styles.css */
+.no-scroll {
+    overflow: hidden;
+}

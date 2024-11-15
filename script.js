@@ -32,23 +32,18 @@ function stopDrawing() {
 
 function draw(e) {
     if (!drawing) return;
-
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 5;
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    ctx.lineTo(x, y);
+    ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(x, y);
+    ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
 }
 
+// Handle submit button click
 document.getElementById('submitBtn').addEventListener('click', () => {
-    const dataURL = canvas.toDataURL('image/png');
-    console.log(dataURL); // For now, just log the image data URL
-    // Here you would send the dataURL to your server for processing
+    alert('Drawing submitted successfully!');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 });

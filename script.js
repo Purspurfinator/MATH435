@@ -1,3 +1,7 @@
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+
 function resizeCanvas() {
     canvas.width = window.innerWidth * 0.9;
     canvas.height = window.innerHeight * 0.6;

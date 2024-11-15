@@ -32,13 +32,11 @@ canvas.addEventListener('touchend', (e) => {
 
 function startDrawing(e) {
     drawing = true;
-    document.body.classList.add('no-scroll');
     draw(e);
 }
 
 function stopDrawing() {
     drawing = false;
-    document.body.classList.remove('no-scroll');
     ctx.beginPath();
 }
 

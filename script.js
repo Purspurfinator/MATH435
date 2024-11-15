@@ -1,8 +1,3 @@
-const canvas = document.getElementById('graphCanvas');
-const ctx = canvas.getContext('2d');
-let drawing = false;
-
-// Adjust canvas size to fit the screen
 function resizeCanvas() {
     canvas.width = window.innerWidth * 0.9;
     canvas.height = window.innerHeight * 0.6;
@@ -60,8 +55,3 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     alert('Drawing submitted successfully!');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
-
-/* styles.css */
-.no-scroll {
-    overflow: hidden;
-}

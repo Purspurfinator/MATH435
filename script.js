@@ -40,7 +40,9 @@ function startDrawing(e) {
 
 function stopDrawing() {
     drawing = false;
-    paths.push(currentPath);
+    if (currentPath.length > 0) {
+        paths.push(currentPath);
+    }
     ctx.beginPath();
 }
 

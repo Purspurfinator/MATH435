@@ -7,6 +7,7 @@ let currentPath = [];
 function resizeCanvas() {
     canvas.width = window.innerWidth * 0.9;
     canvas.height = window.innerHeight * 0.6;
+    redraw();
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
@@ -67,6 +68,7 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     alert('Drawing submitted successfully!');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     paths = [];
+    redraw();
 });
 
 // Handle undo button click
@@ -90,4 +92,5 @@ function redraw() {
         });
         ctx.stroke();
     });
+    stopDrawing(); // Ensure the drawing state is reset
 }

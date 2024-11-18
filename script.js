@@ -1,6 +1,8 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let drawing = false;
+let paths = [];
+let currentPath = [];
 
 function resizeCanvas() {
     canvas.width = window.innerWidth * 0.9;
@@ -32,11 +34,13 @@ canvas.addEventListener('touchend', (e) => {
 
 function startDrawing(e) {
     drawing = true;
+    currentPath = [];
     draw(e);
 }
 
 function stopDrawing() {
     drawing = false;
+    paths.push(currentPath);
     ctx.beginPath();
 }
 
@@ -46,14 +50,42 @@ function draw(e) {
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
 
-    ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+    const x = e.clientX - canvas.offsetLeft;
+    const y = e.clientY - canvas.offsetTop;
+    currentPath.push({ x, y });
+
+    ctx.lineTo(x, y);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+    ctx.moveTo(x, y);
 }
 
 // Handle submit button click
 document.getElementById('submitBtn').addEventListener('click', () => {
     alert('Drawing submitted successfully!');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    paths = [];
 });
+
+// Handle undo button click
+document.getElementById('undoBtn').addEventListener('click', () => {
+    if (paths.length > 0) {
+        paths.pop();
+        redraw();
+    }
+});
+
+function redraw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    paths.forEach(path => {
+        ctx.beginPath();
+        path.forEach((point, index) => {
+            if (index === 0) {
+                ctx.moveTo(point.x, point.y);
+            } else {
+                ctx.lineTo(point.x, point.y);
+            }
+        });
+        ctx.stroke();
+    });
+}

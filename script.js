@@ -3,6 +3,7 @@ const ctx = canvas.getContext('2d');
 let drawing = false;
 let paths = [];
 let currentPath = [];
+let undonePaths = [];
 
 function resizeCanvas() {
     canvas.width = window.innerWidth * 0.9;
@@ -43,6 +44,7 @@ function stopDrawing() {
     drawing = false;
     if (currentPath.length > 0) {
         paths.push(currentPath);
+        undonePaths = []; // Clear the undone paths when a new path is drawn
     }
     ctx.beginPath();
 }
@@ -68,13 +70,22 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     alert('Drawing submitted successfully!');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     paths = [];
+    undonePaths = [];
     redraw();
 });
 
 // Handle undo button click
 document.getElementById('undoBtn').addEventListener('click', () => {
     if (paths.length > 0) {
-        paths.pop();
+        undonePaths.push(paths.pop());
+        redraw();
+    }
+});
+
+// Handle redo button click
+document.getElementById('redoBtn').addEventListener('click', () => {
+    if (undonePaths.length > 0) {
+        paths.push(undonePaths.pop());
         redraw();
     }
 });

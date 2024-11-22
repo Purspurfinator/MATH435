@@ -1,13 +1,20 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const backgroundCanvas = document.getElementById('backgroundCanvas');
+const bgCtx = backgroundCanvas.getContext('2d');
 let drawing = false;
 let paths = [];
 let currentPath = [];
 let drawingCompleted = false;
 
 function resizeCanvas() {
-    canvas.width = window.innerWidth * 0.9;
-    canvas.height = window.innerHeight * 0.6;
+    const container = document.querySelector('.canvas-container');
+    const size = Math.min(container.clientWidth, container.clientHeight);
+    canvas.width = size;
+    canvas.height = size;
+    backgroundCanvas.width = size;
+    backgroundCanvas.height = size;
+    drawBackground();
     redraw();
 }
 resizeCanvas();
@@ -57,8 +64,9 @@ function draw(e) {
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
 
-    const x = e.clientX - canvas.offsetLeft;
-    const y = e.clientY - canvas.offsetTop;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
     currentPath.push({ x, y });
 
     ctx.lineTo(x, y);
@@ -73,6 +81,7 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     paths = [];
     drawingCompleted = false; // Allow drawing again
+    redraw();
 });
 
 // Handle clear button click
@@ -80,6 +89,7 @@ document.getElementById('clearBtn').addEventListener('click', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     paths = [];
     drawingCompleted = false; // Allow drawing again
+    redraw();
 });
 
 function redraw() {
@@ -95,4 +105,37 @@ function redraw() {
         });
         ctx.stroke();
     });
+}
+
+function drawBackground() {
+    bgCtx.clearRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
+    drawAxes(bgCtx);
+    drawBox(bgCtx);
+}
+
+function drawAxes(ctx) {
+    ctx.strokeStyle = 'gray';
+    ctx.lineWidth = 1;
+
+    // Draw x-axis
+    ctx.beginPath();
+    ctx.moveTo(0, backgroundCanvas.height / 2);
+    ctx.lineTo(backgroundCanvas.width, backgroundCanvas.height / 2);
+    ctx.stroke();
+
+    // Draw y-axis
+    ctx.beginPath();
+    ctx.moveTo(backgroundCanvas.width / 2, 0);
+    ctx.lineTo(backgroundCanvas.width / 2, backgroundCanvas.height);
+    ctx.stroke();
+}
+
+function drawBox(ctx) {
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+
+    // Draw box around the canvas
+    ctx.beginPath();
+    ctx.rect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
+    ctx.stroke();
 }

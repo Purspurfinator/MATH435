@@ -3,7 +3,7 @@ const ctx = canvas.getContext('2d');
 let drawing = false;
 let paths = [];
 let currentPath = [];
-let undonePaths = [];
+let drawingCompleted = false;
 
 function resizeCanvas() {
     canvas.width = window.innerWidth * 0.9;
@@ -14,14 +14,16 @@ resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
 // Mouse events
-canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousedown', (e) => {
+    if (!drawingCompleted) startDrawing(e);
+});
 canvas.addEventListener('mouseup', stopDrawing);
 canvas.addEventListener('mousemove', draw);
 
 // Touch events
 canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
-    startDrawing(e.touches[0]);
+    if (!drawingCompleted) startDrawing(e.touches[0]);
 });
 
 canvas.addEventListener('touchmove', (e) => {
@@ -44,7 +46,7 @@ function stopDrawing() {
     drawing = false;
     if (currentPath.length > 0) {
         paths.push(currentPath);
-        undonePaths = []; // Clear the undone paths when a new path is drawn
+        drawingCompleted = true; // Disable further drawing
     }
     ctx.beginPath();
 }
@@ -70,24 +72,14 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     alert('Drawing submitted successfully!');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     paths = [];
-    undonePaths = [];
-    redraw();
+    drawingCompleted = false; // Allow drawing again
 });
 
-// Handle undo button click
-document.getElementById('undoBtn').addEventListener('click', () => {
-    if (paths.length > 0) {
-        undonePaths.push(paths.pop());
-        redraw();
-    }
-});
-
-// Handle redo button click
-document.getElementById('redoBtn').addEventListener('click', () => {
-    if (undonePaths.length > 0) {
-        paths.push(undonePaths.pop());
-        redraw();
-    }
+// Handle clear button click
+document.getElementById('clearBtn').addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    paths = [];
+    drawingCompleted = false; // Allow drawing again
 });
 
 function redraw() {
@@ -103,5 +95,4 @@ function redraw() {
         });
         ctx.stroke();
     });
-    stopDrawing(); // Ensure the drawing state is reset
 }

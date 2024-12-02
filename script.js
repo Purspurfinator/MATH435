@@ -77,7 +77,23 @@ function draw(e) {
 
 // Handle submit button click
 document.getElementById('submitBtn').addEventListener('click', () => {
-    alert('Drawing submitted successfully!');
+    const graphArray = getGraphArray();
+    // Send graphArray to the backend for prediction
+    fetch('/predict', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ graph: graphArray }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(`Predicted graph type: ${data.prediction}`);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     paths = [];
     drawingCompleted = false; // Allow drawing again
@@ -138,4 +154,31 @@ function drawBox(ctx) {
     ctx.beginPath();
     ctx.rect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
     ctx.stroke();
+}
+
+function getGraphArray() {
+    // Create an off-screen canvas for processing
+    const offScreenCanvas = document.createElement('canvas');
+    offScreenCanvas.width = canvas.width;
+    offScreenCanvas.height = canvas.height;
+    const offScreenCtx = offScreenCanvas.getContext('2d');
+
+    // Draw the current canvas content to the off-screen canvas
+    offScreenCtx.drawImage(canvas, 0, 0);
+
+    // Get the image data from the off-screen canvas
+    const imageData = offScreenCtx.getImageData(0, 0, offScreenCanvas.width, offScreenCanvas.height);
+    const data = imageData.data;
+
+    // Convert the image data to a grayscale array
+    const grayArray = [];
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+        grayArray.push(gray);
+    }
+
+    return grayArray;
 }

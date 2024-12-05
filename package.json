@@ -1,0 +1,15 @@
+{
+  "name": "math435",
+  "version": "1.0.0",
+  "description": "generateGraphs.py generates 13 different types of graphs, the code that generates them randomely needs some work. It will output image files of each graph for visual inspection organized in different folders by the graph type, and it generates a single file with all of the graphs stored as matrices. That file can be fed into the graphLearningModel.py",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "flask": "^0.2.10"
+  }
+}

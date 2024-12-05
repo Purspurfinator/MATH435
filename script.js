@@ -78,16 +78,24 @@ function draw(e) {
 // Handle submit button click
 document.getElementById('submitBtn').addEventListener('click', () => {
     const graphArray = getGraphArray();
+    console.log('Graph array length:', graphArray.length); // Debugging statement
+    console.log('Graph array sample:', graphArray.slice(0, 10)); // Debugging statement
     // Send graphArray to the backend for prediction
-    fetch('/predict', {
+    fetch('http://localhost:5000/predict', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ graph: graphArray }),
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Prediction response:', data); // Debugging statement
         alert(`Predicted graph type: ${data.prediction}`);
     })
     .catch(error => {
@@ -159,15 +167,15 @@ function drawBox(ctx) {
 function getGraphArray() {
     // Create an off-screen canvas for processing
     const offScreenCanvas = document.createElement('canvas');
-    offScreenCanvas.width = canvas.width;
-    offScreenCanvas.height = canvas.height;
+    offScreenCanvas.width = 200;  // Resize to 200x200
+    offScreenCanvas.height = 200;
     const offScreenCtx = offScreenCanvas.getContext('2d');
 
     // Draw the current canvas content to the off-screen canvas
-    offScreenCtx.drawImage(canvas, 0, 0);
+    offScreenCtx.drawImage(canvas, 0, 0, 200, 200);
 
     // Get the image data from the off-screen canvas
-    const imageData = offScreenCtx.getImageData(0, 0, offScreenCanvas.width, offScreenCanvas.height);
+    const imageData = offScreenCtx.getImageData(0, 0, 200, 200);
     const data = imageData.data;
 
     // Convert the image data to a grayscale array
@@ -178,6 +186,11 @@ function getGraphArray() {
         const b = data[i + 2];
         const gray = 0.299 * r + 0.587 * g + 0.114 * b;
         grayArray.push(gray);
+    }
+
+    // Ensure the array has the correct number of features
+    while (grayArray.length < 120000) {
+        grayArray.push(0);
     }
 
     return grayArray;

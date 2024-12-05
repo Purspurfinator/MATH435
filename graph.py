@@ -1,13 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import imageio as imageio
+import imageio.v2 as imageio  # Updated import statement
 import os
 import math
+import time
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from multiprocessing import Manager, Lock
+from PIL import Image
 
 D = []
 L = []
 
-def yplotlimit(x,y):
+def yplotlimit(x, y):
     maxima = []
     minima = []
     hasmin = 0
@@ -48,719 +52,604 @@ def yplotlimit(x,y):
     else:
         return 5
 
+def generate_random_line_plot(i, progress, lock, graph_type):
+    m = np.random.uniform(-7, 7)  # Random slope
+    b = np.random.uniform(-5, 5)   # Random intercept
 
-# Function to create and save random line plots
-def generate_random_line_plots(num_plots):
-    for i in range(num_plots):
-        m = np.random.uniform(-7, 7)  # Random slope
-        b = np.random.uniform(-5, 5)   # Random intercept
+    # Generate x values from -5 to 5
+    x_values = np.linspace(-5, 5, 100)
+    # Calculate corresponding y values using the linear equation
+    y_values = m * x_values + b
 
-        # Generate x values from -5 to 5
-        x_values = np.linspace(-5, 5, 100)
-        # Calculate corresponding y values using the linear equation
-        y_values = m * x_values + b
+    # Create the plot
+    plt.figure(figsize=(8, 8))
+    plt.plot(x_values, y_values, color='k', linestyle='-')
+    m = yplotlimit(x_values, y_values)
+    # Set the limits of the plot
+    plt.xlim(-5, 5)
+    plt.ylim(-m, m)
 
-        # Create the plot
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        m = yplotlimit(x_values, y_values)
-        # Set the limits of the plot
-        plt.xlim(-5, 5)
-        plt.ylim(-m, m)
+    plt.xticks([])
+    plt.yticks([])
 
-        plt.xticks([])
-        plt.yticks([])
+    # Add horizontal and vertical lines at zero
+    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
 
-        # Add horizontal and vertical lines at zero
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    # Save the plot as a JPG image
+    plt.savefig(f'random_line_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
 
-        # Save the plot as a JPG image
-        plt.savefig(f'random_line_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+    # Close the plot to free memory
+    plt.close()
 
-        # Close the plot to free memory
-        plt.close()
+    # Convert image to matrix
+    image_path = f'random_line_function_{i + 1}.jpg'
+    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    os.remove(image_path)
 
-def generate_random_quad_plots(num_plots):
-    for i in range(num_plots):
-        a = np.random.uniform(-5, 5)  
-        b = np.random.uniform(-5, 5)   
-        c = np.random.uniform(-5, 5)
-        while c == 0:
-            c = np.random.uniform(-5, 5)        
+    with lock:
+        progress.value += 1
+        print(f"Generated {progress.value} graphs ({graph_type})")
 
+    return matrix, "line"
 
-        # Generate x values from -5 to 5
-        x_values = np.linspace(-5, 5, 100)
-        # Calculate corresponding y values using the linear equation
-        y_values = []
-        for z in x_values:
-            y_values.append(c*(z+a)*(z+b))
+def generate_random_quad_plot(i, progress, lock, graph_type):
+    a = np.random.uniform(-5, 5)  
+    b = np.random.uniform(-5, 5)   
+    c = np.random.uniform(-5, 5)
+    while c == 0:
+        c = np.random.uniform(-5, 5)        
 
-        # Create the plot
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        m = yplotlimit(x_values, y_values)
-        # Set the limits of the plot
-        plt.xlim(-5, 5)
-        plt.ylim(-m, m)
+    # Generate x values from -5 to 5
+    x_values = np.linspace(-5, 5, 100)
+    # Calculate corresponding y values using the quadratic equation
+    y_values = c * (x_values + a) * (x_values + b)
 
-        plt.xticks([])
-        plt.yticks([])
+    # Create the plot
+    plt.figure(figsize=(8, 8))
+    plt.plot(x_values, y_values, color='k', linestyle='-')
+    m = yplotlimit(x_values, y_values)
+    # Set the limits of the plot
+    plt.xlim(-5, 5)
+    plt.ylim(-m, m)
 
-        # Add horizontal and vertical lines at zero
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    plt.xticks([])
+    plt.yticks([])
 
-        # Save the plot as a JPG image
-        plt.savefig(f'random_quad_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+    # Add horizontal and vertical lines at zero
+    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
 
-        # Close the plot to free memory
-        plt.close()
+    # Save the plot as a JPG image
+    plt.savefig(f'random_quad_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
 
-def generate_random_cubic_plots(num_plots):
-    for i in range(num_plots):
-        a = np.random.uniform(-5, 5)  
-        b = np.random.uniform(-5, 5)   
-        c = np.random.uniform(-5, 5)  
-        d = np.random.uniform(-5, 5)
-        while d == 0:
-            d = np.random.uniform(-5, 5)  
+    # Close the plot to free memory
+    plt.close()
 
+    # Convert image to matrix
+    image_path = f'random_quad_function_{i + 1}.jpg'
+    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    os.remove(image_path)
 
-        # Generate x values from -5 to 5
-        x_values = np.linspace(-5, 5, 100)
-        # Calculate corresponding y values using the linear equation
-        #y_values = x_values** 3 * d + x_values**2 * a + b * x_values + c
-        y_values = []
-        for z in x_values:
-            y_values.append(d*(z+a)*(z+b)*(z+c))
+    with lock:
+        progress.value += 1
+        print(f"Generated {progress.value} graphs ({graph_type})")
 
-        # Create the plot
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        m = yplotlimit(x_values, y_values)
-        # Set the limits of the plot
-        plt.xlim(-5, 5)
-        plt.ylim(-m, m)
+    return matrix, "quad"
 
-        plt.xticks([])
-        plt.yticks([])
-
-        # Add horizontal and vertical lines at zero
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-
-        # Save the plot as a JPG image
-        plt.savefig(f'random_cubic_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-
-        # Close the plot to free memory
-        plt.close()
-
-def generate_random_fourthdeg_plots(num_plots):
-    for i in range(num_plots):
-        a = np.random.uniform(-5, 5)  
-        b = np.random.uniform(-5, 5)   
-        c = np.random.uniform(-5, 5)  
-        d = np.random.uniform(-5, 5) 
-        e = np.random.uniform(-5, 5)
-        while e == 0:
-            e = np.random.uniform(-5, 5)  
+def generate_random_cubic_plot(i, progress, lock, graph_type):
+    a = np.random.uniform(-5, 5)  
+    b = np.random.uniform(-5, 5)   
+    c = np.random.uniform(-5, 5)  
+    d = np.random.uniform(-5, 5)
+    while d == 0:
+        d = np.random.uniform(-5, 5)  
 
 
-        # Generate x values from -5 to 5
-        x_values = np.linspace(-5, 5, 100)
-        # Calculate corresponding y values using the linear equation
-        #y_values = x_values**4 * e + x_values** 3 * d + x_values**2 * a + b * x_values + c
-        y_values = []
-        for z in x_values:
-            y_values.append(e*(z+a)*(z+b)*(z+c)*(z+d))
+    # Generate x values from -5 to 5
+    x_values = np.linspace(-5, 5, 100)
+    # Calculate corresponding y values using the linear equation
+    #y_values = x_values** 3 * d + x_values**2 * a + b * x_values + c
+    y_values = []
+    for z in x_values:
+        y_values.append(d*(z+a)*(z+b)*(z+c))
 
-        # Create the plot
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        m = yplotlimit(x_values, y_values)
-        # Set the limits of the plot
-        plt.xlim(-5, 5)
-        plt.ylim(-m, m)
+    # Create the plot
+    plt.figure(figsize=(8, 8))
+    plt.plot(x_values, y_values, color='k', linestyle='-')
+    m = yplotlimit(x_values, y_values)
+    # Set the limits of the plot
+    plt.xlim(-5, 5)
+    plt.ylim(-m, m)
 
-        plt.xticks([])
-        plt.yticks([])
+    plt.xticks([])
+    plt.yticks([])
 
-        # Add horizontal and vertical lines at zero
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    # Add horizontal and vertical lines at zero
+    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
 
-        # Save the plot as a JPG image
-        plt.savefig(f'random_fourthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+    # Save the plot as a JPG image
+    plt.savefig(f'random_cubic_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
 
-        # Close the plot to free memory
-        plt.close()
+    # Close the plot to free memory
+    plt.close()
+
+    # Convert image to matrix
+    image_path = f'random_cubic_function_{i + 1}.jpg'
+    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    os.remove(image_path)
+
+    with lock:
+        progress.value += 1
+        print(f"Generated {progress.value} graphs ({graph_type})")
+
+    return matrix, "cubic"
+
+def generate_random_fourthdeg_plot(i, progress, lock, graph_type):
+    a = np.random.uniform(-5, 5)  
+    b = np.random.uniform(-5, 5)   
+    c = np.random.uniform(-5, 5)  
+    d = np.random.uniform(-5, 5) 
+    e = np.random.uniform(-5, 5)
+    while e == 0:
+        e = np.random.uniform(-5, 5)  
 
 
-def generate_random_fifthdeg_plots(num_plots):
-    for i in range(num_plots):
-        a = np.random.uniform(-5, 5)  
-        b = np.random.uniform(-5, 5)   
-        c = np.random.uniform(-5, 5)  
-        d = np.random.uniform(-5, 5)
-        e = np.random.uniform(-5, 5) 
+    # Generate x values from -5 to 5
+    x_values = np.linspace(-5, 5, 100)
+    # Calculate corresponding y values using the linear equation
+    #y_values = x_values**4 * e + x_values** 3 * d + x_values**2 * a + b * x_values + c
+    y_values = []
+    for z in x_values:
+        y_values.append(e*(z+a)*(z+b)*(z+c)*(z+d))
+
+    # Create the plot
+    plt.figure(figsize=(8, 8))
+    plt.plot(x_values, y_values, color='k', linestyle='-')
+    m = yplotlimit(x_values, y_values)
+    # Set the limits of the plot
+    plt.xlim(-5, 5)
+    plt.ylim(-m, m)
+
+    plt.xticks([])
+    plt.yticks([])
+
+    # Add horizontal and vertical lines at zero
+    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+
+    # Save the plot as a JPG image
+    plt.savefig(f'random_fourthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+
+    # Close the plot to free memory
+    plt.close()
+
+    # Convert image to matrix
+    image_path = f'random_fourthdeg_function_{i + 1}.jpg'
+    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    os.remove(image_path)
+
+    with lock:
+        progress.value += 1
+        print(f"Generated {progress.value} graphs ({graph_type})")
+
+    return matrix, "fourthdeg"
+
+def generate_random_fifthdeg_plot(i, progress, lock, graph_type):
+    a = np.random.uniform(-5, 5)  
+    b = np.random.uniform(-5, 5)   
+    c = np.random.uniform(-5, 5)  
+    d = np.random.uniform(-5, 5)
+    e = np.random.uniform(-5, 5) 
+    f = np.random.uniform(-5, 5)
+    while f == 0:
         f = np.random.uniform(-5, 5)
-        while f == 0:
-            f = np.random.uniform(-5, 5)
-        x_values = np.linspace(-5, 5, 100)
-        y_values = []
-        for z in x_values:
-            y_values.append(f*(z+a)*(z+b)*(z+c)*(z+d)*(z+e))
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        m = yplotlimit(x_values, y_values)
-        plt.xlim(-5, 5)
-        plt.ylim(-m, m)
-        plt.xticks([])
-        plt.yticks([])
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-        plt.savefig(f'random_fifthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-        plt.close()
+    x_values = np.linspace(-5, 5, 100)
+    y_values = []
+    for z in x_values:
+        y_values.append(f*(z+a)*(z+b)*(z+c)*(z+d)*(z+e))
+    plt.figure(figsize=(8, 8))
+    plt.plot(x_values, y_values, color='k', linestyle='-')
+    m = yplotlimit(x_values, y_values)
+    plt.xlim(-5, 5)
+    plt.ylim(-m, m)
+    plt.xticks([])
+    plt.yticks([])
+    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    plt.savefig(f'random_fifthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+    plt.close()
 
-def generate_random_sixthdeg_plots(num_plots):
-    for i in range(num_plots):
-        a = np.random.uniform(-5, 5)  
-        b = np.random.uniform(-5, 5)   
-        c = np.random.uniform(-5, 5)  
-        d = np.random.uniform(-5, 5)
-        e = np.random.uniform(-5, 5)
-        f = np.random.uniform(-5, 5)
-        g = np.random.uniform(-5, 5)
-        while a == 0:
-            a = np.random.uniform(-5, 5) 
-        x_values = np.linspace(-5, 5, 100)
-        y_values = []
-        for z in x_values:
-            y_values.append(g*(z+a)*(z+b)*(z+c)*(z+d)*(z+e)*(z+f))
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        m = yplotlimit(x_values, y_values)
-        plt.xlim(-5, 5)
-        plt.ylim(-m, m)
-        plt.xticks([])
-        plt.yticks([])
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-        plt.savefig(f'random_sixthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-        plt.close()
+    # Convert image to matrix
+    image_path = f'random_fifthdeg_function_{i + 1}.jpg'
+    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    os.remove(image_path)
 
-def generate_random_seventhdeg_plots(num_plots):
-    for i in range(num_plots):
-        a = np.random.uniform(-5, 5)  
-        b = np.random.uniform(-5, 5)   
-        c = np.random.uniform(-5, 5)  
-        d = np.random.uniform(-5, 5)
-        e = np.random.uniform(-5, 5)
-        f = np.random.uniform(-5, 5) 
-        g = np.random.uniform(-5, 5)
-        h = np.random.uniform(-5, 5)
-        while g == 0:
-            g = np.random.uniform(-5, 5) 
-        x_values = np.linspace(-5, 5, 100)
-        y_values = []
-        for z in x_values:
-            y_values.append(g*(z+a)*(z+b)*(z+c)*(z+d)*(z+e)*(z+f)*(z+h))
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        m = yplotlimit(x_values, y_values)
-        plt.xlim(-5, 5)
-        plt.ylim(-m, m)
-        plt.xticks([])
-        plt.yticks([])
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-        plt.savefig(f'random_seventhdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-        plt.close()
+    with lock:
+        progress.value += 1
+        print(f"Generated {progress.value} graphs ({graph_type})")
 
-def generate_random_eighthdeg_plots(num_plots):
-    for i in range(num_plots):
-        a = np.random.uniform(-5, 5)  
-        b = np.random.uniform(-5, 5)   
-        c = np.random.uniform(-5, 5)  
-        d = np.random.uniform(-5, 5)
-        e = np.random.uniform(-5, 5)
-        f = np.random.uniform(-5, 5) 
-        g = np.random.uniform(-5, 5)
-        h = np.random.uniform(-5, 5)
-        j = np.random.uniform(-5, 5)
-        while j == 0:
-            j = np.random.uniform(-5, 5) 
-        # Generate x values from -5 to 5
-        x_values = np.linspace(-5, 5, 100)
-        # Calculate corresponding y values using the linear equation
-        y_values = []
-        for z in x_values:
-            y_values.append(j*(z+a)*(z+b)*(z+c)*(z+d)*(z+e)*(z+f)*(z+g)*(z+h))        # Create the plot
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        m = yplotlimit(x_values, y_values)
-        # Set the limits of the plot
-        plt.xlim(-5, 5)
-        plt.ylim(-m, m)
-        plt.xticks([])
-        plt.yticks([])
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-        plt.savefig(f'random_eighthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-        plt.close()
-        
-def generate_random_ninthdeg_plots(num_plots):
-    for i in range(num_plots):
-        a = np.random.uniform(-5, 5)  
-        b = np.random.uniform(-5, 5)   
-        c = np.random.uniform(-5, 5)  
-        d = np.random.uniform(-5, 5)
-        e = np.random.uniform(-5, 5)
-        f = np.random.uniform(-5, 5) 
-        g = np.random.uniform(-5, 5)
-        h = np.random.uniform(-5, 5)
-        j = np.random.uniform(-5, 5)
-        k = np.random.uniform(-5, 5)
-        while j == 0:
-            j = np.random.uniform(-5, 5) 
-        
-        # Generate x values from -5 to 5
-        x_values = np.linspace(-5, 5, 100)
-        # Calculate corresponding y values using the linear equation
-        y_values = []
-        for z in x_values:
-            y_values.append(j*(z+a)*(z+b)*(z+c)*(z+d)*(z+e)*(z+f)*(z+g)*(z+h)*(z+k))
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-        # Create the plot
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        m = yplotlimit(x_values, y_values)
-        plt.xlim(-5, 5)
-        plt.ylim(-m, m)
-        plt.xticks([])
-        plt.yticks([])
-        #plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        #plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-        # Save the plot as a JPG image
-        plt.savefig(f'random_ninthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-        # Close the plot to free memory
-        plt.close()
-        
-        
-        # # Set the limits of the plot
-        # plt.xlim(-5, 5)
-        # plt.ylim(-5, 5)
-        # plt.xticks([])
-        # plt.yticks([])
-        # plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        # plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-        # plt.savefig(f'random_ninthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-        # plt.close()
+    return matrix, "fifthdeg"
 
-def generate_random_tenthdeg_plots(num_plots):
-    for i in range(num_plots):
-        a = np.random.uniform(-5, 5)  
-        b = np.random.uniform(-5, 5)   
-        c = np.random.uniform(-5, 5)  
-        d = np.random.uniform(-5, 5)
-        e = np.random.uniform(-5, 5)
-        f = np.random.uniform(-5, 5) 
-        g = np.random.uniform(-5, 5)
-        h = np.random.uniform(-5, 5)
-        k = np.random.uniform(-5, 5)
-        j = np.random.uniform(-5, 5)
-        l = np.random.uniform(-5,5)
-        while j == 0:
-            j = np.random.uniform(-5, 5) 
-        # Generate x values from -5 to 5
-        x_values = np.linspace(-5, 5, 100)
-        # Calculate corresponding y values using the linear equation
-        y_values = []
-        for z in x_values:
-            y_values.append(j*(z+a)*(z+b)*(z+c)*(z+d)*(z+e)*(z+f)*(z+g)*(z+h)*(z+k)*(z+l))
-        #y_values = x_values**10 * j +  x_values ** 9 * i + x_values**8 * h + x_values**7 * g + x_values** 6 * f + x_values**5 * e + x_values** 3 * d + x_values**2 * a + b * x_values + c
-        # Create the plot
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        m = yplotlimit(x_values, y_values)
-        # Set the limits of the plot
-        plt.xlim(-5, 5)
-        plt.ylim(-m, m)
-        plt.xticks([])
-        plt.yticks([])
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-        plt.savefig(f'random_tenthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-        plt.close()
+def generate_random_sixthdeg_plot(i, progress, lock, graph_type):
+    a = np.random.uniform(-5, 5)  
+    b = np.random.uniform(-5, 5)   
+    c = np.random.uniform(-5, 5)  
+    d = np.random.uniform(-5, 5)
+    e = np.random.uniform(-5, 5)
+    f = np.random.uniform(-5, 5)
+    g = np.random.uniform(-5, 5)
+    while a == 0:
+        a = np.random.uniform(-5, 5) 
+    x_values = np.linspace(-5, 5, 100)
+    y_values = []
+    for z in x_values:
+        y_values.append(g*(z+a)*(z+b)*(z+c)*(z+d)*(z+e)*(z+f))
+    plt.figure(figsize=(8, 8))
+    plt.plot(x_values, y_values, color='k', linestyle='-')
+    m = yplotlimit(x_values, y_values)
+    plt.xlim(-5, 5)
+    plt.ylim(-m, m)
+    plt.xticks([])
+    plt.yticks([])
+    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    plt.savefig(f'random_sixthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+    plt.close()
 
-def generate_random_sin_plots(num_plots):
-    for i in range(num_plots):
-        a = np.random.uniform(-5, 5)  
-        b = np.random.uniform(-5, 5)  
-        c = np.random.uniform(-5, 5)  
-        d = np.random.uniform(-5, 5) 
-        while a == 0:
-            a = np.random.uniform(-5,5)
-        # Generate x values from -5 to 5
-        x_values = np.linspace(-5, 5, 100)
-        #y_values = math.sin(b*(x_values)-c) * a + d
-        # Create the plot 
-        y_values = []
-        for j in x_values:
-            y_values.append(math.sin(b*(j)-c) * a + d)
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        m = yplotlimit(x_values, y_values)
-        # Set the limits of the plot
-        plt.xlim(-5, 5)
-        plt.ylim(-m, m)
-        plt.xticks([])
-        plt.yticks([])
-        # Add horizontal and vertical lines at zero
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-        # Save the plot as a JPG image
-        plt.savefig(f'random_sin_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-        # Close the plot to free memory
-        plt.close()
+    # Convert image to matrix
+    image_path = f'random_sixthdeg_function_{i + 1}.jpg'
+    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    os.remove(image_path)
 
+    with lock:
+        progress.value += 1
+        print(f"Generated {progress.value} graphs ({graph_type})")
 
-def generate_random_abs_plots(num_plots):
-    for i in range(num_plots):
-        a = np.random.uniform(-5, 5)  
-        b = np.random.uniform(-5, 5)  
-        c = np.random.uniform(-5, 5)  
-        while a == 0:
-            a = np.random.uniform(-5, 5)
-        # Generate x values from -5 to 5
-        x_values = np.linspace(-5, 5, 100)
-        #currently dents, may need to increase the range (maybe 500 instead of 100?)
+    return matrix, "sixthdeg"
 
-        #y_values = []
-        #for j in x_values:
-        #    y_values.append(a * np.abs(b * j )+ c) 
-        y_values = a * np.abs(b * (x_values) + c)
-        # Create the plot
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        # Set the limits of the plot
-        #m = yplotlimit(x_values, y_values)
-        plt.xlim(-5, 5)
-        plt.ylim(-5, 5)
-        plt.xticks([])
-        plt.yticks([])
-        # Add horizontal and vertical lines at zero
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-        # Save the plot
-        plt.savefig(f'random_abs_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-        plt.close()
-"""
-def generate_random_root_plots(num_plots):
-    for i in range(num_plots):
-        a = np.random.uniform(-3, 3)  
-        b = np.random.uniform(0, 5)  
-        c = np.random.uniform(-5, 0)  
-        d = np.random.uniform(-2, 2) 
-        while a == 0:
-            a = np.random.uniform(-5,5)
-        # Generate x values from -5 to 5
-        x_values = np.linspace(0, 10, 100)
-        #y_values = math.sin(b*(x_values)-c) * a + d
-        # Create the plot 
-        y_values = []
-        
-        
-        for z in x_values:
-            y_values.append(a*(math.sqrt(b*(z-c)))+d)
+def generate_random_seventhdeg_plot(i, progress, lock, graph_type):
+    a = np.random.uniform(-5, 5)  
+    b = np.random.uniform(-5, 5)   
+    c = np.random.uniform(-5, 5)  
+    d = np.random.uniform(-5, 5)
+    e = np.random.uniform(-5, 5)
+    f = np.random.uniform(-5, 5) 
+    g = np.random.uniform(-5, 5)
+    h = np.random.uniform(-5, 5)
+    while g == 0:
+        g = np.random.uniform(-5, 5) 
+    x_values = np.linspace(-5, 5, 100)
+    y_values = []
+    for z in x_values:
+        y_values.append(g*(z+a)*(z+b)*(z+c)*(z+d)*(z+e)*(z+f)*(z+h))
+    plt.figure(figsize=(8, 8))
+    plt.plot(x_values, y_values, color='k', linestyle='-')
+    m = yplotlimit(x_values, y_values)
+    plt.xlim(-5, 5)
+    plt.ylim(-m, m)
+    plt.xticks([])
+    plt.yticks([])
+    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    plt.savefig(f'random_seventhdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+    plt.close()
 
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        print(a,b,c,d)
-        #m = yplotlimit(x_values, y_values)
-        # Set the limits of the plot
-        plt.xlim(c - 10, -1*c + 10)
-        print(c-1, -1*c+1)
-        if d < 0:
-            plt.ylim(d-10, -1*d+10)
-        else:
-            plt.ylim(-1*d-10, d+10)
-        plt.xticks([])
-        plt.yticks([])
-        # Add horizontal and vertical lines at zero
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-        # Save the plot as a JPG image
-        plt.savefig(f'random_root_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-        # Close the plot to free memory
-        plt.close()
-"""
-def generate_random_exp_plots(num_plots):
-    for i in range(num_plots):
-        a = np.random.uniform(0, 5)
-        b = np.random.uniform(-5, 5)
-        c = np.random.uniform(-5, 5)
-        while a == 0:
-            a = np.random.uniform(-5, 5)
-        # Generate x values from -5 to 5
-        x_values = np.linspace(-5, 5, 100)
-        # Calculate y values using the exponential function
-        y_values = a * np.exp(b * x_values) + c
-        # Create the plot
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        #m = yplotlimit(x_values, y_values)
-        # Set the limits of the plot
-        plt.xlim(-5, 5)
-        plt.ylim(-10, 10)
-        plt.xticks([])
-        plt.yticks([])
-        # Add horizontal and vertical lines at zero
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-        # Save the plot as a JPG image
-        plt.savefig(f'random_exp_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-        # Close the plot to free memory
-        plt.close()    
+    # Convert image to matrix
+    image_path = f'random_seventhdeg_function_{i + 1}.jpg'
+    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    os.remove(image_path)
 
-def generate_random_log_plots(num_plots):        
-   for i in range(num_plots):
-        a = np.random.uniform(-5, 0)
-        b = np.random.uniform(-5, 5)
-        c = np.random.uniform(-5, 5)
-        while a == 0:
-            a = np.random.uniform(-5, 5)
-       # Generate x values from -5 to 5
-        x_values = np.linspace(-5, 5, 100)
-        y_values = a * np.exp(b * x_values) + c
-       # Calculate y values using the log function
+    with lock:
+        progress.value += 1
+        print(f"Generated {progress.value} graphs ({graph_type})")
 
-       # Create the plot
-        plt.figure(figsize=(8, 8))
-        plt.plot(x_values, y_values, color='k', linestyle='-')
-        #m = yplotlimit(x_values, y_values)
-       # Set the limits of the plot
-        plt.xlim(-5, 5)
-        plt.ylim(-10, 10)
-        plt.xticks([])
-        plt.yticks([])
-        print(a, b, c)
-       # Add horizontal and vertical lines at zero
-        plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-        plt.axvline(0, color='black', linewidth=0.5, ls='solid')
-       # Save the plot as a JPG image
-        plt.savefig(f'random_log_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-       # Close the plot to free memory
-        plt.close()      
+    return matrix, "seventhdeg"
+
+def generate_random_eighthdeg_plot(i, progress, lock, graph_type):
+    a = np.random.uniform(-5, 5)  
+    b = np.random.uniform(-5, 5)   
+    c = np.random.uniform(-5, 5)  
+    d = np.random.uniform(-5, 5)
+    e = np.random.uniform(-5, 5)
+    f = np.random.uniform(-5, 5) 
+    g = np.random.uniform(-5, 5)
+    h = np.random.uniform(-5, 5)
+    j = np.random.uniform(-5, 5)
+    while j == 0:
+        j = np.random.uniform(-5, 5) 
+    # Generate x values from -5 to 5
+    x_values = np.linspace(-5, 5, 100)
+    # Calculate corresponding y values using the linear equation
+    y_values = []
+    for z in x_values:
+        y_values.append(j*(z+a)*(z+b)*(z+c)*(z+d)*(z+e)*(z+f)*(z+g)*(z+h))        
+    # Create the plot
+    plt.figure(figsize=(8, 8))
+    plt.plot(x_values, y_values, color='k', linestyle='-')
+    m = yplotlimit(x_values, y_values)
+    # Set the limits of the plot
+    plt.xlim(-5, 5)
+    plt.ylim(-m, m)
+    plt.xticks([])
+    plt.yticks([])
+    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    plt.savefig(f'random_eighthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+    plt.close()
+
+    # Convert image to matrix
+    image_path = f'random_eighthdeg_function_{i + 1}.jpg'
+    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    os.remove(image_path)
+
+    with lock:
+        progress.value += 1
+        print(f"Generated {progress.value} graphs ({graph_type})")
+
+    return matrix, "eighthdeg"
+
+def generate_random_ninthdeg_plot(i, progress, lock, graph_type):
+    a = np.random.uniform(-5, 5)  
+    b = np.random.uniform(-5, 5)   
+    c = np.random.uniform(-5, 5)  
+    d = np.random.uniform(-5, 5)
+    e = np.random.uniform(-5, 5)
+    f = np.random.uniform(-5, 5) 
+    g = np.random.uniform(-5, 5)
+    h = np.random.uniform(-5, 5)
+    j = np.random.uniform(-5, 5)
+    k = np.random.uniform(-5, 5)
+    while j == 0:
+        j = np.random.uniform(-5, 5) 
+    
+    # Generate x values from -5 to 5
+    x_values = np.linspace(-5, 5, 100)
+    # Calculate corresponding y values using the linear equation
+    y_values = []
+    for z in x_values:
+        y_values.append(j*(z+a)*(z+b)*(z+c)*(z+d)*(z+e)*(z+f)*(z+g)*(z+h)*(z+k))
+    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    # Create the plot
+    plt.figure(figsize=(8, 8))
+    plt.plot(x_values, y_values, color='k', linestyle='-')
+    m = yplotlimit(x_values, y_values)
+    plt.xlim(-5, 5)
+    plt.ylim(-m, m)
+    plt.xticks([])
+    plt.yticks([])
+    plt.savefig(f'random_ninthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+    plt.close()
+
+    # Convert image to matrix
+    image_path = f'random_ninthdeg_function_{i + 1}.jpg'
+    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    os.remove(image_path)
+
+    with lock:
+        progress.value += 1
+        print(f"Generated {progress.value} graphs ({graph_type})")
+
+    return matrix, "ninthdeg"
+
+def generate_random_tenthdeg_plot(i, progress, lock, graph_type):
+    a = np.random.uniform(-5, 5)  
+    b = np.random.uniform(-5, 5)   
+    c = np.random.uniform(-5, 5)  
+    d = np.random.uniform(-5, 5)
+    e = np.random.uniform(-5, 5)
+    f = np.random.uniform(-5, 5) 
+    g = np.random.uniform(-5, 5)
+    h = np.random.uniform(-5, 5)
+    k = np.random.uniform(-5, 5)
+    j = np.random.uniform(-5, 5)
+    l = np.random.uniform(-5,5)
+    while j == 0:
+        j = np.random.uniform(-5, 5) 
+    # Generate x values from -5 to 5
+    x_values = np.linspace(-5, 5, 100)
+    # Calculate corresponding y values using the linear equation
+    y_values = []
+    for z in x_values:
+        y_values.append(j*(z+a)*(z+b)*(z+c)*(z+d)*(z+e)*(z+f)*(z+g)*(z+h)*(z+k)*(z+l))
+    # Create the plot
+    plt.figure(figsize=(8, 8))
+    plt.plot(x_values, y_values, color='k', linestyle='-')
+    m = yplotlimit(x_values, y_values)
+    # Set the limits of the plot
+    plt.xlim(-5, 5)
+    plt.ylim(-m, m)
+    plt.xticks([])
+    plt.yticks([])
+    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    plt.savefig(f'random_tenthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+    plt.close()
+
+    # Convert image to matrix
+    image_path = f'random_tenthdeg_function_{i + 1}.jpg'
+    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    os.remove(image_path)
+
+    with lock:
+        progress.value += 1
+        print(f"Generated {progress.value} graphs ({graph_type})")
+
+    return matrix, "tenthdeg"
+
+def generate_random_sin_plot(i, progress, lock, graph_type):
+    a = np.random.uniform(-5, 5)  
+    b = np.random.uniform(-5, 5)  
+    c = np.random.uniform(-5, 5)  
+    d = np.random.uniform(-5, 5) 
+    while a == 0:
+        a = np.random.uniform(-5,5)
+    # Generate x values from -5 to 5
+    x_values = np.linspace(-5, 5, 100)
+    # Create the plot 
+    y_values = []
+    for j in x_values:
+        y_values.append(math.sin(b*(j)-c) * a + d)
+    plt.figure(figsize=(8, 8))
+    plt.plot(x_values, y_values, color='k', linestyle='-')
+    m = yplotlimit(x_values, y_values)
+    # Set the limits of the plot
+    plt.xlim(-5, 5)
+    plt.ylim(-m, m)
+    plt.xticks([])
+    plt.yticks([])
+    # Add horizontal and vertical lines at zero
+    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    # Save the plot as a JPG image
+    plt.savefig(f'random_sin_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+    # Close the plot to free memory
+    plt.close()
+
+    # Convert image to matrix
+    image_path = f'random_sin_function_{i + 1}.jpg'
+    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    os.remove(image_path)
+
+    with lock:
+        progress.value += 1
+        print(f"Generated {progress.value} graphs ({graph_type})")
+
+    return matrix, "sin"
+
+def generate_random_abs_plot(i, progress, lock, graph_type):
+    a = np.random.uniform(-5, 5)  
+    b = np.random.uniform(-5, 5)  
+    c = np.random.uniform(-5, 5)  
+    while a == 0:
+        a = np.random.uniform(-5, 5)
+    # Generate x values from -5 to 5
+    x_values = np.linspace(-5, 5, 100)
+    y_values = a * np.abs(b * (x_values) + c)
+    # Create the plot
+    plt.figure(figsize=(8, 8))
+    plt.plot(x_values, y_values, color='k', linestyle='-')
+    # Set the limits of the plot
+    plt.xlim(-5, 5)
+    plt.ylim(-5, 5)
+    plt.xticks([])
+    plt.yticks([])
+    # Add horizontal and vertical lines at zero
+    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    # Save the plot
+    plt.savefig(f'random_abs_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+    plt.close()
+
+    # Convert image to matrix
+    image_path = f'random_abs_function_{i + 1}.jpg'
+    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    os.remove(image_path)
+
+    with lock:
+        progress.value += 1
+        print(f"Generated {progress.value} graphs ({graph_type})")
+
+    return matrix, "abs"
+
+def generate_random_exp_plot(i, progress, lock, graph_type):
+    a = np.random.uniform(0, 5)
+    b = np.random.uniform(-5, 5)
+    c = np.random.uniform(-5, 5)
+    while a == 0:
+        a = np.random.uniform(-5, 5)
+    # Generate x values from -5 to 5
+    x_values = np.linspace(-5, 5, 100)
+    # Calculate y values using the exponential function
+    y_values = a * np.exp(b * x_values) + c
+    # Create the plot
+    plt.figure(figsize=(8, 8))
+    plt.plot(x_values, y_values, color='k', linestyle='-')
+    # Set the limits of the plot
+    plt.xlim(-5, 5)
+    plt.ylim(-10, 10)
+    plt.xticks([])
+    plt.yticks([])
+    # Add horizontal and vertical lines at zero
+    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
+    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    # Save the plot as a JPG image
+    plt.savefig(f'random_exp_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+    # Close the plot to free memory
+    plt.close()    
+
+    # Convert image to matrix
+    image_path = f'random_exp_function_{i + 1}.jpg'
+    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    os.remove(image_path)
+
+    with lock:
+        progress.value += 1
+        print(f"Generated {progress.value} graphs ({graph_type})")
+
+    return matrix, "exp"
 
 def image_to_matrix(image_path, new_size=(200, 200)):
     img = imageio.imread(image_path)
-    
-    original_height, original_width = img.shape[:2]
-
-    img_resized = np.zeros((new_size[0], new_size[1], img.shape[2]), dtype=img.dtype)
-
-    height_scale = original_height / new_size[0]
-    width_scale = original_width / new_size[1]
-
-    for i in range(new_size[0]):
-        for j in range(new_size[1]):
-            orig_x = int(j * width_scale)
-            orig_y = int(i * height_scale)
-            img_resized[i, j] = img[orig_y, orig_x]
-
+    img_resized = np.array(Image.fromarray(img).resize(new_size))
     return img_resized
 
+def generate_graphs(graph_type, num_graphs, progress, lock, max_workers):
+    results = []
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(graph_type, i, progress, lock, graph_type.__name__) for i in range(num_graphs)]
+        for future in as_completed(futures):
+            results.append(future.result())
+    return results
 
-#num_plots = int(input("Enter the number of random line plots to generate: "))
-number = int(input("Enter amount of graphs to generate: "))
-for i in range(number):
-    generate_random_line_plots(1) 
-    image_path = 'random_line_function_1.jpg'  
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    os.remove("random_line_function_1.jpg")
-    os.remove("image.jpg")
-    plt.close()
-    L.append("line")
-    generate_random_quad_plots(1)  
-    image_path = 'random_quad_function_1.jpg'  
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    os.remove("random_quad_function_1.jpg")
-    os.remove("image.jpg")
-    plt.close()
-    L.append("quad")
-    generate_random_cubic_plots(1)  
-    image_path = 'random_cubic_function_1.jpg'  
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    os.remove("random_cubic_function_1.jpg")
-    os.remove("image.jpg")
-    plt.close()
-    L.append("cubic")
-    generate_random_fourthdeg_plots(1)  
-    image_path = 'random_fourthdeg_function_1.jpg'  
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    os.remove("random_fourthdeg_function_1.jpg")
-    os.remove("image.jpg")
-    plt.close()
-    L.append("fourthdeg")
-    generate_random_fifthdeg_plots(1)  
-    image_path = 'random_fifthdeg_function_1.jpg' 
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    os.remove("random_fifthdeg_function_1.jpg")
-    os.remove("image.jpg")
-    plt.close()
-    L.append("fifthdeg")
-    generate_random_sixthdeg_plots(1)  
-    image_path = 'random_sixthdeg_function_1.jpg' 
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    os.remove("random_sixthdeg_function_1.jpg")
-    os.remove("image.jpg")
-    plt.close()
-    L.append("sixthdeg")
-    generate_random_seventhdeg_plots(1)  
-    image_path = 'random_seventhdeg_function_1.jpg'  
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    os.remove("random_seventhdeg_function_1.jpg")
-    os.remove("image.jpg")
-    plt.close()
-    L.append("seventhdeg")
-    generate_random_eighthdeg_plots(1)  
-    image_path = 'random_eighthdeg_function_1.jpg'  
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    os.remove("random_eighthdeg_function_1.jpg")
-    os.remove("image.jpg")
-    plt.close()
-    L.append("eighthdeg")
-    generate_random_ninthdeg_plots(1)  
-    image_path = 'random_ninthdeg_function_1.jpg'  
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    os.remove("random_ninthdeg_function_1.jpg")
-    os.remove("image.jpg")
-    plt.close()
-    L.append("ninthdeg")
-    generate_random_tenthdeg_plots(1)  
-    image_path = 'random_tenthdeg_function_1.jpg'  
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    os.remove("random_tenthdeg_function_1.jpg")
-    os.remove("image.jpg")
-    plt.close()
-    L.append("tenthdeg")
-    generate_random_sin_plots(1)  
-    image_path = 'random_sin_function_1.jpg'  
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    os.remove("random_sin_function_1.jpg")
-    os.remove("image.jpg")
-    plt.close()
-    L.append("sin")
-    generate_random_abs_plots(1)  
-    image_path = 'random_abs_function_1.jpg'  
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    os.remove("random_abs_function_1.jpg")
-    os.remove("image.jpg")
-    plt.close()
-    L.append("abs")
-    generate_random_exp_plots(1)  
-    image_path = 'random_exp_function_1.jpg'  
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    os.remove("random_exp_function_1.jpg")
-    os.remove("image.jpg")
-    plt.close()
-    L.append("exp")
-    """
-    generate_random_log_plots(1)  
-    image_path = 'random_log_function_1.jpg'  
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    #os.remove("random_log_function_1.jpg")
-    os.remove("image.jpg")
-    L.append("log")
-    
-    generate_random_root_plots(1)  
-    image_path = 'random_root_function_1.jpg'  
-    matrix = image_to_matrix(image_path, new_size=(200, 200)) 
-    print("Resized Matrix shape:", matrix.shape)
-    D.append(matrix)
-    plt.figure()
-    plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.gray)
-    plt.savefig(f'image.jpg', format='jpg')
-    #os.remove("random_root_function_1.jpg")
-    os.remove("image.jpg")
-    L.append("root") 
-    """
+if __name__ == "__main__":
+    number = int(input("Enter amount of graphs to generate: "))
+    start_time = time.time()
 
+    manager = Manager()
+    progress = manager.Value('i', 0)
+    lock = manager.Lock()
 
+    graph_types = [
+        generate_random_line_plot,
+        generate_random_quad_plot,
+        generate_random_cubic_plot,
+        generate_random_fourthdeg_plot,
+        generate_random_fifthdeg_plot,
+        generate_random_sixthdeg_plot,
+        generate_random_seventhdeg_plot,
+        generate_random_eighthdeg_plot,
+        generate_random_ninthdeg_plot,
+        generate_random_tenthdeg_plot,
+        generate_random_sin_plot,
+        generate_random_abs_plot,
+        generate_random_exp_plot
+    ]
 
-np.save('Matricies.npy', D)
-np.save('Labels.npy', L)
+    num_graphs_per_type = number // len(graph_types)
+    remainder = number % len(graph_types)
+
+    max_workers = os.cpu_count()  # Dynamically set the number of workers based on available CPU cores
+
+    for graph_type in graph_types:
+        results = generate_graphs(graph_type, num_graphs_per_type, progress, lock, max_workers)
+        for matrix, label in results:
+            D.append(matrix)
+            L.append(label)
+
+    # Handle the remainder
+    for i in range(remainder):
+        graph_type = graph_types[i % len(graph_types)]
+        results = generate_graphs(graph_type, 1, progress, lock, max_workers)
+        for matrix, label in results:
+            D.append(matrix)
+            L.append(label)
+
+    # Save results
+    np.save('Matricies.npy', D)
+    np.save('Labels.npy', L)
+
+    elapsed_time = time.time() - start_time
+    print(f"Generated {number} graphs in {elapsed_time:.2f} seconds")

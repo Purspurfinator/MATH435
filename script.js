@@ -179,7 +179,6 @@ function getGraphArray() {
     // Get the image data from the off-screen canvas
     const imageData = offScreenCtx.getImageData(0, 0, 200, 200);
     const data = imageData.data;
-
     // Convert the image data to a grayscale array
     const grayArray = [];
     for (let i = 0; i < data.length; i += 4) {

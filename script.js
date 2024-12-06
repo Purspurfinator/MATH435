@@ -131,7 +131,7 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     console.log('Graph array length:', graphArray.length); // Debugging statement
     console.log('Graph array sample:', graphArray.slice(0, 10)); // Debugging statement
     // Send graphArray to the backend for prediction
-    fetch('http://protos.ddns.net:8080/predict', {  // Update the URL to point to your server
+    fetch('https://protos.ddns.net/predict', {  // Update the URL to use HTTPS
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

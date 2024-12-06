@@ -131,7 +131,7 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     console.log('Graph array length:', graphArray.length); // Debugging statement
     console.log('Graph array sample:', graphArray.slice(0, 10)); // Debugging statement
     // Send graphArray to the backend for prediction
-    fetch('http://localhost:8080/predict', {  // Update the port here
+    fetch('http://localhost/predict', {  // Port 80 is the default for HTTP
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

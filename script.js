@@ -131,7 +131,7 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     console.log('Graph array length:', graphArray.length); // Debugging statement
     console.log('Graph array sample:', graphArray.slice(0, 10)); // Debugging statement
     // Send graphArray to the backend for prediction
-    fetch('https://protos.ddns.net/predict', {  // Update the URL to use HTTPS
+    fetch('http://localhost:5000/predict', {  // Update the URL to use localhost
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -167,19 +167,16 @@ document.getElementById('clearBtn').addEventListener('click', () => {
 });
 
 function getGraphArray() {
-    // Create an off-screen canvas for processing
     const offScreenCanvas = document.createElement('canvas');
-    offScreenCanvas.width = 200;  // Resize to 200x200
-    offScreenCanvas.height = 200;
+    offScreenCanvas.width = 300;  // Resize to 300x300 to match 120,000 features
+    offScreenCanvas.height = 300;
     const offScreenCtx = offScreenCanvas.getContext('2d');
 
-    // Draw the current canvas content to the off-screen canvas
-    offScreenCtx.drawImage(canvas, 0, 0, 200, 200);
+    offScreenCtx.drawImage(canvas, 0, 0, 300, 300);
 
-    // Get the image data from the off-screen canvas
-    const imageData = offScreenCtx.getImageData(0, 0, 200, 200);
+    const imageData = offScreenCtx.getImageData(0, 0, 300, 300);
     const data = imageData.data;
-    // Convert the image data to a grayscale array
+
     const grayArray = [];
     for (let i = 0; i < data.length; i += 4) {
         const r = data[i];
@@ -189,7 +186,6 @@ function getGraphArray() {
         grayArray.push(gray);
     }
 
-    // Ensure the array has the correct number of features
     while (grayArray.length < 120000) {
         grayArray.push(0);
     }

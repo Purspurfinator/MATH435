@@ -22,9 +22,10 @@ def predict():
     logging.debug("Received request: %s", request.json)
     data = request.json['graph']
     graph_data = np.array(data).reshape(1, -1)  # Flatten the array
+    logging.debug("Graph data: %s", graph_data)
     prediction = model.predict(graph_data)
     logging.debug("Prediction: %s", prediction[0])
     return jsonify({'prediction': prediction[0]})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='127.0.0.1', port=5000, debug=True)

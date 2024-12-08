@@ -72,9 +72,6 @@ def generate_random_line_plot(i, progress, lock, graph_type):
     plt.xticks([])
     plt.yticks([])
 
-    # Add horizontal and vertical lines at zero
-    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
 
     # Save the plot as a JPG image
     plt.savefig(f'random_line_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
@@ -116,9 +113,6 @@ def generate_random_quad_plot(i, progress, lock, graph_type):
     plt.xticks([])
     plt.yticks([])
 
-    # Add horizontal and vertical lines at zero
-    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
 
     # Save the plot as a JPG image
     plt.savefig(f'random_quad_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
@@ -165,9 +159,6 @@ def generate_random_cubic_plot(i, progress, lock, graph_type):
     plt.xticks([])
     plt.yticks([])
 
-    # Add horizontal and vertical lines at zero
-    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
 
     # Save the plot as a JPG image
     plt.savefig(f'random_cubic_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
@@ -214,10 +205,7 @@ def generate_random_fourthdeg_plot(i, progress, lock, graph_type):
 
     plt.xticks([])
     plt.yticks([])
-
-    # Add horizontal and vertical lines at zero
-    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    
 
     # Save the plot as a JPG image
     plt.savefig(f'random_fourthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
@@ -256,8 +244,6 @@ def generate_random_fifthdeg_plot(i, progress, lock, graph_type):
     plt.ylim(-m, m)
     plt.xticks([])
     plt.yticks([])
-    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
     plt.savefig(f'random_fifthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
     plt.close()
 
@@ -293,8 +279,6 @@ def generate_random_sixthdeg_plot(i, progress, lock, graph_type):
     plt.ylim(-m, m)
     plt.xticks([])
     plt.yticks([])
-    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
     plt.savefig(f'random_sixthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
     plt.close()
 
@@ -331,8 +315,6 @@ def generate_random_seventhdeg_plot(i, progress, lock, graph_type):
     plt.ylim(-m, m)
     plt.xticks([])
     plt.yticks([])
-    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
     plt.savefig(f'random_seventhdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
     plt.close()
 
@@ -374,8 +356,6 @@ def generate_random_eighthdeg_plot(i, progress, lock, graph_type):
     plt.ylim(-m, m)
     plt.xticks([])
     plt.yticks([])
-    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
     plt.savefig(f'random_eighthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
     plt.close()
 
@@ -410,8 +390,6 @@ def generate_random_ninthdeg_plot(i, progress, lock, graph_type):
     y_values = []
     for z in x_values:
         y_values.append(j*(z+a)*(z+b)*(z+c)*(z+d)*(z+e)*(z+f)*(z+g)*(z+h)*(z+k))
-    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
     # Create the plot
     plt.figure(figsize=(8, 8))
     plt.plot(x_values, y_values, color='k', linestyle='-')
@@ -463,8 +441,6 @@ def generate_random_tenthdeg_plot(i, progress, lock, graph_type):
     plt.ylim(-m, m)
     plt.xticks([])
     plt.yticks([])
-    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
     plt.savefig(f'random_tenthdeg_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
     plt.close()
 
@@ -500,9 +476,7 @@ def generate_random_sin_plot(i, progress, lock, graph_type):
     plt.ylim(-m, m)
     plt.xticks([])
     plt.yticks([])
-    # Add horizontal and vertical lines at zero
-    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+
     # Save the plot as a JPG image
     plt.savefig(f'random_sin_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
     # Close the plot to free memory
@@ -536,9 +510,6 @@ def generate_random_abs_plot(i, progress, lock, graph_type):
     plt.ylim(-5, 5)
     plt.xticks([])
     plt.yticks([])
-    # Add horizontal and vertical lines at zero
-    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
     # Save the plot
     plt.savefig(f'random_abs_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
     plt.close()
@@ -572,9 +543,7 @@ def generate_random_exp_plot(i, progress, lock, graph_type):
     plt.ylim(-10, 10)
     plt.xticks([])
     plt.yticks([])
-    # Add horizontal and vertical lines at zero
-    plt.axhline(0, color='black', linewidth=0.5, ls='solid')
-    plt.axvline(0, color='black', linewidth=0.5, ls='solid')
+    
     # Save the plot as a JPG image
     plt.savefig(f'random_exp_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
     # Close the plot to free memory

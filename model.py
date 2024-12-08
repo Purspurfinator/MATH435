@@ -1,9 +1,10 @@
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 import joblib
 from tqdm import tqdm
+from scipy.fftpack import fft
 
 # Step 1: Load and preprocess the data
 def load_data():
@@ -31,8 +32,10 @@ def extract_features(data):
 
         num_maxima = len(maxima)
         num_minima = len(minima)
+        std_dev = np.std(y_values)
+        fft_coeffs = np.abs(fft(y_values))[:10]  # Take first 10 Fourier coefficients
 
-        features.append([num_maxima, num_minima])
+        features.append([num_maxima, num_minima, std_dev] + list(fft_coeffs))
     
     return np.array(features)
 
@@ -46,18 +49,25 @@ def train_model(features, labels):
 
     X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
 
-    # Train a single model with progress output
-    model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
-    
-    # Add progress bar for the training process
-    for i in tqdm(range(1, 101), desc="Training Progress"):
-        model.n_estimators = i
-        model.fit(X_train, y_train)
-    
-    y_pred = model.predict(X_test)
+    # Define the model and hyperparameters
+    model = RandomForestClassifier(random_state=42, n_jobs=-1)
+    param_grid = {
+        'n_estimators': [50, 100, 200],
+        'max_depth': [None, 10, 20, 30],
+        'min_samples_split': [2, 5, 10],
+        'min_samples_leaf': [1, 2, 4]
+    }
+
+    # Perform Grid Search
+    grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=5, n_jobs=-1, verbose=2)
+    grid_search.fit(X_train, y_train)
+
+    best_model = grid_search.best_estimator_
+
+    y_pred = best_model.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
     print(f"Model accuracy: {accuracy}")
-    joblib.dump(model, 'graph_model.pkl')
+    joblib.dump(best_model, 'graph_model.pkl')
 
 if __name__ == "__main__":
     data, labels = load_data()

@@ -94,25 +94,7 @@ function redraw() {
 
 function drawBackground() {
     bgCtx.clearRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
-    drawAxes(bgCtx);
     drawBox(bgCtx);
-}
-
-function drawAxes(ctx) {
-    ctx.strokeStyle = 'gray';
-    ctx.lineWidth = 1;
-
-    // Draw x-axis
-    ctx.beginPath();
-    ctx.moveTo(0, backgroundCanvas.height / 2);
-    ctx.lineTo(backgroundCanvas.width, backgroundCanvas.height / 2);
-    ctx.stroke();
-
-    // Draw y-axis
-    ctx.beginPath();
-    ctx.moveTo(backgroundCanvas.width / 2, 0);
-    ctx.lineTo(backgroundCanvas.width / 2, backgroundCanvas.height);
-    ctx.stroke();
 }
 
 function drawBox(ctx) {
@@ -167,16 +149,19 @@ document.getElementById('clearBtn').addEventListener('click', () => {
 });
 
 function getGraphArray() {
+    // Create an off-screen canvas for processing
     const offScreenCanvas = document.createElement('canvas');
-    offScreenCanvas.width = 300;  // Resize to 300x300 to match 120,000 features
-    offScreenCanvas.height = 300;
+    offScreenCanvas.width = 200;  // Resize to 200x200
+    offScreenCanvas.height = 200;
     const offScreenCtx = offScreenCanvas.getContext('2d');
 
-    offScreenCtx.drawImage(canvas, 0, 0, 300, 300);
+    // Draw the current canvas content to the off-screen canvas
+    offScreenCtx.drawImage(canvas, 0, 0, 200, 200);
 
-    const imageData = offScreenCtx.getImageData(0, 0, 300, 300);
+    // Get the image data from the off-screen canvas
+    const imageData = offScreenCtx.getImageData(0, 0, 200, 200);
     const data = imageData.data;
-
+    // Convert the image data to a grayscale array
     const grayArray = [];
     for (let i = 0; i < data.length; i += 4) {
         const r = data[i];
@@ -186,6 +171,7 @@ function getGraphArray() {
         grayArray.push(gray);
     }
 
+    // Ensure the array has the correct number of features
     while (grayArray.length < 120000) {
         grayArray.push(0);
     }

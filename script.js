@@ -107,39 +107,6 @@ function drawBox(ctx) {
     ctx.stroke();
 }
 
-// Handle submit button click
-document.getElementById('submitBtn').addEventListener('click', () => {
-    const graphArray = getGraphArray();
-    console.log('Graph array length:', graphArray.length); // Debugging statement
-    console.log('Graph array sample:', graphArray.slice(0, 10)); // Debugging statement
-    // Send graphArray to the backend for prediction
-    fetch('http://localhost:5000/predict', {  // Update the URL to use localhost
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ graph: graphArray }),
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Prediction response:', data); // Debugging statement
-        alert(`Predicted graph type: ${data.prediction}`);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    paths = [];
-    drawingCompleted = false; // Allow drawing again
-    redraw();
-});
-
 // Handle clear button click
 document.getElementById('clearBtn').addEventListener('click', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -148,29 +115,46 @@ document.getElementById('clearBtn').addEventListener('click', () => {
     redraw();
 });
 
-function getGraphArray() {
+function getBase64Image() {
     // Create an off-screen canvas for processing
     const offScreenCanvas = document.createElement('canvas');
-    offScreenCanvas.width = 200;  // Resize to 200x200
-    offScreenCanvas.height = 200;
+    offScreenCanvas.width = 250;  // Resize to 250x250
+    offScreenCanvas.height = 250;
     const offScreenCtx = offScreenCanvas.getContext('2d');
 
     // Draw the current canvas content to the off-screen canvas
-    offScreenCtx.drawImage(canvas, 0, 0, 200, 200);
+    offScreenCtx.drawImage(canvas, 0, 0, 250, 250);
 
-    // Get the image data from the off-screen canvas
-    const imageData = offScreenCtx.getImageData(0, 0, 200, 200);
-    const data = imageData.data;
-
-    // Convert the image data to a binary array
-    const binaryArray = [];
-    for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-        binaryArray.push(gray < 128 ? 1 : 0);
-    }
-
-    return binaryArray;
+    // Get the base64-encoded image data
+    const base64Image = offScreenCanvas.toDataURL('image/png');
+    console.log('Base64 image:', base64Image);  // Debugging statement
+    return base64Image;
 }
+
+// Handle submit button click
+document.getElementById('submitBtn').addEventListener('click', () => {
+    const base64Image = getBase64Image();
+    console.log('Base64 image length:', base64Image.length);  // Debugging statement
+
+    // Send base64 image to the backend for prediction
+    fetch('http://protos.ddns.net:8080/predict', {  // Updated URL
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image: base64Image }),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Prediction response:', data);  // Debugging statement
+        alert(`Predicted graph type: ${data.prediction}`);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+});

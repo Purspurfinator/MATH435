@@ -80,7 +80,7 @@ def generate_random_line_plot(i, progress, lock, graph_type):
 
     # Convert image to matrix
     image_path = f'random_line_function_{i + 1}.jpg'
-    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
 
     with lock:
@@ -120,7 +120,7 @@ def generate_random_quad_plot(i, progress, lock, graph_type):
 
     # Convert image to matrix
     image_path = f'random_quad_function_{i + 1}.jpg'
-    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
 
     with lock:
@@ -166,7 +166,7 @@ def generate_random_cubic_plot(i, progress, lock, graph_type):
 
     # Convert image to matrix
     image_path = f'random_cubic_function_{i + 1}.jpg'
-    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
 
     with lock:
@@ -213,7 +213,7 @@ def generate_random_fourthdeg_plot(i, progress, lock, graph_type):
 
     # Convert image to matrix
     image_path = f'random_fourthdeg_function_{i + 1}.jpg'
-    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
 
     with lock:
@@ -247,7 +247,7 @@ def generate_random_fifthdeg_plot(i, progress, lock, graph_type):
 
     # Convert image to matrix
     image_path = f'random_fifthdeg_function_{i + 1}.jpg'
-    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
 
     with lock:
@@ -282,7 +282,7 @@ def generate_random_sixthdeg_plot(i, progress, lock, graph_type):
 
     # Convert image to matrix
     image_path = f'random_sixthdeg_function_{i + 1}.jpg'
-    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
 
     with lock:
@@ -318,7 +318,7 @@ def generate_random_seventhdeg_plot(i, progress, lock, graph_type):
 
     # Convert image to matrix
     image_path = f'random_seventhdeg_function_{i + 1}.jpg'
-    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
 
     with lock:
@@ -359,7 +359,7 @@ def generate_random_eighthdeg_plot(i, progress, lock, graph_type):
 
     # Convert image to matrix
     image_path = f'random_eighthdeg_function_{i + 1}.jpg'
-    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
 
     with lock:
@@ -401,7 +401,7 @@ def generate_random_ninthdeg_plot(i, progress, lock, graph_type):
 
     # Convert image to matrix
     image_path = f'random_ninthdeg_function_{i + 1}.jpg'
-    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
 
     with lock:
@@ -444,7 +444,7 @@ def generate_random_tenthdeg_plot(i, progress, lock, graph_type):
 
     # Convert image to matrix
     image_path = f'random_tenthdeg_function_{i + 1}.jpg'
-    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
 
     with lock:
@@ -482,7 +482,7 @@ def generate_random_sin_plot(i, progress, lock, graph_type):
 
     # Convert image to matrix
     image_path = f'random_sin_function_{i + 1}.jpg'
-    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
 
     with lock:
@@ -514,7 +514,7 @@ def generate_random_abs_plot(i, progress, lock, graph_type):
 
     # Convert image to matrix
     image_path = f'random_abs_function_{i + 1}.jpg'
-    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
 
     with lock:
@@ -549,7 +549,7 @@ def generate_random_exp_plot(i, progress, lock, graph_type):
 
     # Convert image to matrix
     image_path = f'random_exp_function_{i + 1}.jpg'
-    matrix = image_to_matrix(image_path, new_size=(200, 200))
+    matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
 
     with lock:
@@ -558,7 +558,7 @@ def generate_random_exp_plot(i, progress, lock, graph_type):
 
     return matrix, "exp"
 
-def image_to_matrix(image_path, new_size=(200, 200)):
+def image_to_matrix(image_path, new_size=(250, 250)):
     img = imageio.imread(image_path)
     img_resized = np.array(Image.fromarray(img).resize(new_size))
     # Convert to binary matrix: path (black) as 1, background (white) as 0

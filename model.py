@@ -30,8 +30,8 @@ def train_model(data, labels):
     X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
     
     # Debugging statements
-    print(f"X_train shape: {X_train.shape}")  # Should be (num_samples * 0.8, 40000)
-    print(f"X_test shape: {X_test.shape}")    # Should be (num_samples * 0.2, 40000)
+    print(f"X_train shape: {X_train.shape}")  # Should be (num_samples * 0.8, 90000)
+    print(f"X_test shape: {X_test.shape}")    # Should be (num_samples * 0.2, 90000)
     print(f"y_train shape: {y_train.shape}")
     print(f"y_test shape: {y_test.shape}")
 

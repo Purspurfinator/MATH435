@@ -137,7 +137,7 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     console.log('Base64 image length:', base64Image.length);  // Debugging statement
 
     // Send base64 image to the backend for prediction
-    fetch('http://protos.ddns.net:8080/predict', {  // Updated URL
+    fetch('https://protos.ddns.net:8080/predict', {  // Updated URL
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

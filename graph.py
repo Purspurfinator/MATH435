@@ -561,7 +561,9 @@ def generate_random_exp_plot(i, progress, lock, graph_type):
 def image_to_matrix(image_path, new_size=(200, 200)):
     img = imageio.imread(image_path)
     img_resized = np.array(Image.fromarray(img).resize(new_size))
-    return img_resized
+    # Convert to binary matrix: path (black) as 1, background (white) as 0
+    binary_matrix = (img_resized[:, :, 0] < 128).astype(int)
+    return binary_matrix
 
 def generate_graphs(graph_type, num_graphs, progress, lock, max_workers):
     results = []

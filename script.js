@@ -162,56 +162,15 @@ function getGraphArray() {
     const imageData = offScreenCtx.getImageData(0, 0, 200, 200);
     const data = imageData.data;
 
-    // Convert the image data to a grayscale array
-    const grayArray = [];
+    // Convert the image data to a binary array
+    const binaryArray = [];
     for (let i = 0; i < data.length; i += 4) {
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
         const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-        grayArray.push(gray);
+        binaryArray.push(gray < 128 ? 1 : 0);
     }
 
-    // Apply Gaussian smoothing
-    const smoothedArray = gaussianSmoothing(grayArray, 200, 200);
-
-    // Normalize the pixel values
-    const normalizedArray = normalize(smoothedArray);
-
-    return normalizedArray;
-}
-
-function gaussianSmoothing(array, width, height) {
-    const kernel = [
-        [1, 4, 7, 4, 1],
-        [4, 16, 26, 16, 4],
-        [7, 26, 41, 26, 7],
-        [4, 16, 26, 16, 4],
-        [1, 4, 7, 4, 1]
-    ];
-    const kernelSize = 5;
-    const kernelSum = 273; // Sum of all kernel values
-
-    const smoothedArray = new Array(array.length).fill(0);
-
-    for (let y = 2; y < height - 2; y++) {
-        for (let x = 2; x < width - 2; x++) {
-            let sum = 0;
-            for (let ky = 0; ky < kernelSize; ky++) {
-                for (let kx = 0; kx < kernelSize; kx++) {
-                    const pixel = array[(y + ky - 2) * width + (x + kx - 2)];
-                    sum += pixel * kernel[ky][kx];
-                }
-            }
-            smoothedArray[y * width + x] = sum / kernelSum;
-        }
-    }
-
-    return smoothedArray;
-}
-
-function normalize(array) {
-    const min = Math.min(...array);
-    const max = Math.max(...array);
-    return array.map(value => (value - min) / (max - min));
+    return binaryArray;
 }

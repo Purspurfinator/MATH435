@@ -11,8 +11,12 @@ def load_data():
     data = np.load('Matrices.npy')
     labels = np.load('Labels.npy')
     
-    # Ensure the data is reshaped to 200x200 pixels
-    data = data.reshape(data.shape[0], 200, 200)
+    # Debugging statements to check the shape of the loaded data
+    print(f"Original data shape: {data.shape}")
+    print(f"Labels shape: {labels.shape}")
+    
+    # Flatten the 2D matrices to 1D arrays
+    data = data.reshape(data.shape[0], -1)
     
     return data, labels
 

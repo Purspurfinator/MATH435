@@ -72,7 +72,6 @@ def generate_random_line_plot(i, progress, lock, graph_type):
     plt.xticks([])
     plt.yticks([])
 
-
     # Save the plot as a JPG image
     plt.savefig(f'random_line_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
 
@@ -112,7 +111,6 @@ def generate_random_quad_plot(i, progress, lock, graph_type):
 
     plt.xticks([])
     plt.yticks([])
-
 
     # Save the plot as a JPG image
     plt.savefig(f'random_quad_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
@@ -543,7 +541,7 @@ def generate_random_exp_plot(i, progress, lock, graph_type):
     plt.ylim(-10, 10)
     plt.xticks([])
     plt.yticks([])
-    
+
     # Save the plot as a JPG image
     plt.savefig(f'random_exp_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
     # Close the plot to free memory
@@ -617,7 +615,7 @@ if __name__ == "__main__":
             L.append(label)
 
     # Save results
-    np.save('Matricies.npy', D)
+    np.save('Matrices.npy', D)
     np.save('Labels.npy', L)
 
     elapsed_time = time.time() - start_time

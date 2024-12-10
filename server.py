@@ -11,7 +11,7 @@ import imageio.v2 as imageio
 app = Flask(__name__)
 
 # Update CORS configuration to allow requests from your GitHub Pages domain
-CORS(app, resources={r"/*": {"origins": "https://purspurfinator.github.io"}})  # Replace <your-github-username> with your actual GitHub username
+CORS(app, resources={r"/*": {"origins": "https://purspurfinator.github.io"}})
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)

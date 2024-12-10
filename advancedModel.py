@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier  # Use scikit-learn's RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import joblib
@@ -9,7 +9,7 @@ import time
 
 def extract_features(flattened_data):
     features = []
-    for i in range(flattened_data.shape[0]):
+    for i in tqdm(range(flattened_data.shape[0]), desc="Extracting Features"):
         y_values = flattened_data[i]
         x_values = np.linspace(0, len(y_values) - 1, len(y_values))
         
@@ -106,7 +106,7 @@ def train_advanced_model(data, labels):
     
     X_train, X_test, y_train, y_test = train_test_split(feature_data, labels, test_size=0.2, random_state=42)
     
-    model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+    model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)  # Ensure n_jobs=-1 is set
     
     # Add progress bar for the training process
     start_time = time.time()

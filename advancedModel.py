@@ -5,6 +5,7 @@ from sklearn.metrics import accuracy_score
 import joblib
 from scipy.signal import find_peaks
 from tqdm import tqdm
+import time
 
 def extract_features(x_values, y_values):
     features = {}
@@ -91,6 +92,7 @@ def load_data():
     
     # Extract features for each plot
     feature_list = []
+    start_time = time.time()
     for i in range(data.shape[0]):
         x_values = np.linspace(-5, 5, 100)
         y_values = data[i].reshape(250, 250).mean(axis=1)  # Simplified example
@@ -100,6 +102,8 @@ def load_data():
         
         features = extract_features(x_values_aug, y_values_aug)
         feature_list.append(features)
+    end_time = time.time()
+    print(f"Feature extraction time: {end_time - start_time} seconds")
     
     # Convert feature list to a numpy array
     feature_array = np.array([list(f.values()) for f in feature_list])
@@ -112,9 +116,12 @@ def train_advanced_model(data, labels):
     model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
     
     # Add progress bar for the training process
+    start_time = time.time()
     for i in tqdm(range(1, 101), desc="Training Progress"):
         model.n_estimators = i
         model.fit(X_train, y_train)
+    end_time = time.time()
+    print(f"Training time: {end_time - start_time} seconds")
     
     y_pred = model.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)

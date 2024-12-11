@@ -562,7 +562,7 @@ def image_to_matrix(image_path, new_size=(250, 250)):
     img = imageio.imread(image_path)
     img_resized = np.array(Image.fromarray(img).resize(new_size))
     # Convert to binary matrix: path (black) as 1, background (white) as 0
-    binary_matrix = (img_resized[:, :, 0] < 128).astype(int)
+    binary_matrix = (img_resized[:, :, 0] < 128).astype(np.uint8)
     return binary_matrix
 
 def generate_graphs(graph_type, num_graphs, progress, lock, max_workers):

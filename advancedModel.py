@@ -6,6 +6,7 @@ import joblib
 from scipy.signal import find_peaks
 from tqdm import tqdm
 import time
+from sklearn.preprocessing import StandardScaler
 
 def extract_features(flattened_data):
     features = []
@@ -27,36 +28,10 @@ def extract_features(flattened_data):
         # Find peaks (local maxima)
         peaks, _ = find_peaks(y_values)
         feature_dict['num_peaks'] = len(peaks)
-        feature_dict['mean_peak_height'] = np.mean(y_values[peaks]) if len(peaks) > 0 else 0
         
         # Find valleys (local minima)
         valleys, _ = find_peaks(-y_values)
         feature_dict['num_valleys'] = len(valleys)
-        feature_dict['mean_valley_depth'] = np.mean(y_values[valleys]) if len(valleys) > 0 else 0
-        
-        # Calculate curvature
-        curvature = np.gradient(slopes, x_values)
-        feature_dict['mean_curvature'] = np.mean(curvature)
-        feature_dict['std_curvature'] = np.std(curvature)
-        
-        # Symmetry
-        feature_dict['symmetry'] = np.sum(np.abs(y_values - y_values[::-1])) / len(y_values)
-        
-        # Periodicity (for sine functions)
-        autocorr = np.correlate(y_values, y_values, mode='full')
-        feature_dict['periodicity'] = np.max(autocorr[len(autocorr)//2:])
-        
-        # Inflection points
-        inflection_points = np.where(np.diff(np.sign(curvature)))[0]
-        feature_dict['num_inflection_points'] = len(inflection_points)
-        
-        # Amplitude and frequency (for sine functions)
-        if len(peaks) > 1:
-            feature_dict['amplitude'] = (np.max(y_values[peaks]) - np.min(y_values[valleys])) / 2
-            feature_dict['frequency'] = len(peaks) / (x_values[-1] - x_values[0])
-        else:
-            feature_dict['amplitude'] = 0
-            feature_dict['frequency'] = 0
         
         # Exponential growth/decay
         if np.all(y_values > 0):
@@ -82,6 +57,13 @@ def extract_features(flattened_data):
     
     # Convert feature list to a numpy array
     feature_array = np.array([list(f.values()) for f in features])
+    
+    # Normalize the features
+    scaler = StandardScaler()
+    feature_array = scaler.fit_transform(feature_array)
+    
+    # Save the scaler
+    joblib.dump(scaler, 'scaler.pkl')
     
     return feature_array
 

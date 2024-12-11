@@ -62,7 +62,7 @@ function stopDrawing() {
 
 function draw(e) {
     if (!drawing) return;
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 2;  // Thinner line width
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
 

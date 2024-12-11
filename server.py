@@ -7,7 +7,7 @@ import base64
 from PIL import Image
 import io
 import imageio.v2 as imageio
-from scipy.signal import find_peaks
+from scipy.signal import find_peaks, savgol_filter
 
 app = Flask(__name__)
 
@@ -148,21 +148,19 @@ def predict():
     
     # Save the binary matrix as a text file for inspection
     np.savetxt('binary_matrix.txt', graph_matrix, fmt='%d')
-    print("Saved binary matrix as 'binary_matrix.txt'")
+    logging.debug("Saved binary matrix as 'binary_matrix.txt'")
     
-    # Verify the shape of the binary matrix
-    print(f"Binary matrix shape: {graph_matrix.shape}")
+    # Debugging prints for the binary matrix
+    logging.debug("Binary matrix shape: %s", graph_matrix.shape)
+    logging.debug("Binary matrix: %s", graph_matrix)
     
     # Extract features from the binary matrix
     features = extract_features_from_matrix(graph_matrix)
     
-    # Verify the shape of the feature array
-    print(f"Feature array shape: {features.shape}")
-    
     # Debugging prints before feeding the input to the model
-    logging.debug("Graph data shape: %s", features.shape)
-    logging.debug("Number of features: %d", features.size)
+    logging.debug("Extracted features: %s", features)
     
+    # Predict the graph type
     prediction = model.predict([features])
     logging.debug("Prediction: %s", prediction[0])
     return jsonify({'prediction': prediction[0]})

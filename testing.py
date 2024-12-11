@@ -52,13 +52,10 @@ def yplotlimit(x, y):
 
 def image_to_matrix(image_path, new_size=(250, 250)):
     img = imageio.imread(image_path)
-    print(f"Original image shape: {img.shape}")
     img_resized = np.array(Image.fromarray(img).resize(new_size))
-    print(f"Resized image shape: {img_resized.shape}")
     if img_resized.ndim == 3:
         img_resized = img_resized[:, :, 0]  # Convert to 2D if it's a 3D array
     binary_matrix = (img_resized < 128).astype(np.uint8)
-    print(f"Binary matrix shape: {binary_matrix.shape}")
     return binary_matrix
 
 def generate_graphs(graph_type, num_graphs, progress, lock, max_workers):
@@ -622,19 +619,7 @@ if __name__ == "__main__":
     # Extract features from the generated graphs
     data = np.array(D)
     labels = np.array(L)
-    print(f"Data shape: {data.shape}")
     feature_data = extract_features(data)  # Pass the 2D binary matrices directly
-
-    # Print features for each graph
-    feature_names = [
-        'num_peaks', 'num_valleys', 'num_critical_points', 'max_value', 'min_value',
-        'width', 'height', 'area', 'symmetry', 'exp_growth_rate', 'is_parabola',
-        'end_behavior', 'even_end_behavior', 'is_abs', 'is_even', 'is_odd', 'is_sine'
-    ]
-    for i, (features, label) in enumerate(zip(feature_data, labels)):
-        print(f"Graph {i + 1} ({label}):")
-        for feature_name, feature_value in zip(feature_names, features):
-            print(f"  {feature_name}: {feature_value}")
 
     # Evaluate the model
     y_pred = model.predict(feature_data)

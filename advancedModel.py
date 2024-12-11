@@ -3,60 +3,66 @@ from sklearn.ensemble import RandomForestClassifier  # Use scikit-learn's Random
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import joblib
-from scipy.signal import find_peaks
+from scipy.signal import find_peaks, savgol_filter
 from tqdm import tqdm
 import time
 
-def extract_features(flattened_data):
+def extract_features(binary_matrices):
     features = []
-    for i in tqdm(range(flattened_data.shape[0]), desc="Extracting Features"):
-        y_values = flattened_data[i]
-        x_values = np.linspace(0, len(y_values) - 1, len(y_values))
+    for i in tqdm(range(binary_matrices.shape[0]), desc="Extracting Features"):
+        binary_matrix = binary_matrices[i]
+        
+        # Extract x and y coordinates where the value is 1
+        y_coords, x_coords = np.where(binary_matrix == 1)
+        
+        # Check if there are any points with value 1
+        if len(y_coords) == 0 or len(x_coords) == 0:
+            # If no points with value 1, set all features to 0
+            feature_dict = {key: 0 for key in [
+                'num_peaks', 'num_valleys', 'num_critical_points', 'max_value', 'min_value',
+                'width', 'height', 'area', 'symmetry', 'exp_growth_rate', 'is_parabola',
+                'end_behavior', 'even_end_behavior', 'is_abs', 'is_even', 'is_odd', 'is_sine'
+            ]}
+            features.append(feature_dict)
+            continue
+        
+        # Sort coordinates by x values
+        sorted_indices = np.argsort(x_coords)
+        x_values = x_coords[sorted_indices]
+        y_values = y_coords[sorted_indices]
+        
+        # Smooth the y values to reduce noise
+        if len(y_values) > 11:  # Ensure there are enough points to apply the filter
+            y_values_smooth = savgol_filter(y_values, window_length=11, polyorder=2)
+        else:
+            y_values_smooth = y_values
         
         feature_dict = {}
         
-        # Calculate slope
-        slopes = np.gradient(y_values, x_values)
-        feature_dict['mean_slope'] = np.mean(slopes)
-        feature_dict['std_slope'] = np.std(slopes)
-        
-        # Slopes at the beginning and end of the plot
-        feature_dict['start_slope'] = slopes[0]
-        feature_dict['end_slope'] = slopes[-1]
-        
         # Find peaks (local maxima)
-        peaks, _ = find_peaks(y_values)
+        peaks, _ = find_peaks(y_values_smooth)
         feature_dict['num_peaks'] = len(peaks)
-        feature_dict['mean_peak_height'] = np.mean(y_values[peaks]) if len(peaks) > 0 else 0
         
         # Find valleys (local minima)
-        valleys, _ = find_peaks(-y_values)
+        valleys, _ = find_peaks(-y_values_smooth)
         feature_dict['num_valleys'] = len(valleys)
-        feature_dict['mean_valley_depth'] = np.mean(y_values[valleys]) if len(valleys) > 0 else 0
         
-        # Calculate curvature
-        curvature = np.gradient(slopes, x_values)
-        feature_dict['mean_curvature'] = np.mean(curvature)
-        feature_dict['std_curvature'] = np.std(curvature)
+        # Total number of critical points (peaks + valleys)
+        feature_dict['num_critical_points'] = len(peaks) + len(valleys)
+        
+        # Max and Min Values
+        feature_dict['max_value'] = np.max(y_values)
+        feature_dict['min_value'] = np.min(y_values)
+        
+        # Width and Height
+        feature_dict['width'] = len(x_values)
+        feature_dict['height'] = feature_dict['max_value'] - feature_dict['min_value']
+        
+        # Area under the curve
+        feature_dict['area'] = np.sum(y_values)
         
         # Symmetry
         feature_dict['symmetry'] = np.sum(np.abs(y_values - y_values[::-1])) / len(y_values)
-        
-        # Periodicity (for sine functions)
-        autocorr = np.correlate(y_values, y_values, mode='full')
-        feature_dict['periodicity'] = np.max(autocorr[len(autocorr)//2:])
-        
-        # Inflection points
-        inflection_points = np.where(np.diff(np.sign(curvature)))[0]
-        feature_dict['num_inflection_points'] = len(inflection_points)
-        
-        # Amplitude and frequency (for sine functions)
-        if len(peaks) > 1:
-            feature_dict['amplitude'] = (np.max(y_values[peaks]) - np.min(y_values[valleys])) / 2
-            feature_dict['frequency'] = len(peaks) / (x_values[-1] - x_values[0])
-        else:
-            feature_dict['amplitude'] = 0
-            feature_dict['frequency'] = 0
         
         # Exponential growth/decay
         if np.all(y_values > 0):
@@ -65,18 +71,38 @@ def extract_features(flattened_data):
             feature_dict['exp_growth_rate'] = 0
         
         # Specific logic for different types of plots
-        feature_dict['is_parabola'] = int(np.all(np.diff(np.sign(np.gradient(slopes))) != 0))  # Quadratic plot
+        feature_dict['is_parabola'] = int(len(peaks) == 1 and len(valleys) == 1)  # Quadratic plot
+        
+        # End behavior based on edge values
         feature_dict['end_behavior'] = np.sign(y_values[0]) * np.sign(y_values[-1])  # Odd degree polynomial
         feature_dict['even_end_behavior'] = int(np.sign(y_values[0]) == np.sign(y_values[-1]))  # Even degree polynomial
         
-        # Maximum number of critical points for polynomials
-        feature_dict['num_critical_points'] = len(peaks) + len(valleys)
-        
         # Absolute value function behavior
         if len(peaks) == 1 and len(valleys) == 0:
-            feature_dict['abs_slope_diff'] = abs(slopes[0] - slopes[-1])
+            peak_index = peaks[0]
+            if peak_index > 0 and peak_index < len(y_values):
+                left_segment = y_values[:peak_index]
+                right_segment = y_values[peak_index:]
+                if len(left_segment) == len(right_segment):
+                    feature_dict['is_abs'] = int(np.all(np.sign(left_segment) != np.sign(right_segment)) and np.all(np.abs(left_segment) == np.abs(right_segment)))
+                else:
+                    feature_dict['is_abs'] = 0
+            else:
+                feature_dict['is_abs'] = 0
         else:
-            feature_dict['abs_slope_diff'] = 0
+            feature_dict['is_abs'] = 0
+        
+        # Even or odd function behavior
+        feature_dict['is_even'] = int(np.sign(y_values[0]) != np.sign(y_values[-1]))
+        feature_dict['is_odd'] = int(np.sign(y_values[0]) == np.sign(y_values[-1]))
+        
+        # Sine function behavior
+        if len(peaks) > 1 and len(valleys) > 1:
+            max_equal = np.all(np.isclose(y_values[peaks], y_values[peaks][0]))
+            min_equal = np.all(np.isclose(y_values[valleys], y_values[valleys][0]))
+            feature_dict['is_sine'] = int(max_equal and min_equal)
+        else:
+            feature_dict['is_sine'] = 0
         
         features.append(feature_dict)
     
@@ -90,23 +116,15 @@ def load_data():
     data = np.load('Matrices.npy')
     labels = np.load('Labels.npy')
     
-    # Flatten the 2D matrices to 1D arrays for the model
-    data = data.reshape(data.shape[0], -1)
-    
-    # Debugging statements
-    print(f"Data shape: {data.shape}")
-    print(f"Labels shape: {labels.shape}")
-    print(f"Unique labels: {np.unique(labels)}")
-    
     return data, labels
 
 def train_advanced_model(data, labels):
-    # Extract features from the flattened data
+    # Extract features from the binary matrices
     feature_data = extract_features(data)
     
     X_train, X_test, y_train, y_test = train_test_split(feature_data, labels, test_size=0.2, random_state=42)
     
-    model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)  # Ensure n_jobs=-1 is set
+    model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
     
     # Add progress bar for the training process
     start_time = time.time()

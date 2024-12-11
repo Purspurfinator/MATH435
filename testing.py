@@ -1,15 +1,16 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import imageio.v2 as imageio  # Updated import statement
 import os
-import math
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import Manager, Lock
+from sklearn.metrics import accuracy_score
+import joblib
+from tqdm import tqdm
 from PIL import Image
-
-D = []
-L = []
+from advancedModel import extract_features
+import matplotlib.pyplot as plt
+import imageio.v2 as imageio
+import math
 
 def yplotlimit(x, y):
     maxima = []
@@ -33,15 +34,12 @@ def yplotlimit(x, y):
     if minima:
         n = min(minima)
         hasmin = 1
-    
     if hasmax == 1:
         mp = m + (m/20)
     if hasmin == 1:
         if n < 0:
             n *= -1
-            nm = n + (n/20)
-        else:
-            nm = n + (n/20)
+        nm = n + (n/20)
     if hasmin == 1 and hasmax == 1:
         mmmm = max(nm, mp)
         return mmmm
@@ -52,41 +50,52 @@ def yplotlimit(x, y):
     else:
         return 5
 
+def image_to_matrix(image_path, new_size=(250, 250)):
+    img = imageio.imread(image_path)
+    img_resized = np.array(Image.fromarray(img).resize(new_size))
+    if img_resized.ndim == 3:
+        img_resized = img_resized[:, :, 0]  # Convert to 2D if it's a 3D array
+    binary_matrix = (img_resized < 128).astype(np.uint8)
+    return binary_matrix
+
+def generate_graphs(graph_type, num_graphs, progress, lock, max_workers):
+    results = []
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(graph_type, i, progress, lock, graph_type.__name__) for i in range(num_graphs)]
+        for future in as_completed(futures):
+            results.append(future.result())
+    return results
+
+def evaluate_per_graph_type(model, X_test, y_test):
+    graph_types = np.unique(y_test)
+    for graph_type in graph_types:
+        indices = np.where(y_test == graph_type)
+        X_test_type = X_test[indices]
+        y_test_type = y_test[indices]
+        y_pred_type = model.predict(X_test_type)
+        accuracy = accuracy_score(y_test_type, y_pred_type)
+        print(f"Accuracy for {graph_type}: {accuracy}")
+
 def generate_random_line_plot(i, progress, lock, graph_type):
-    m = np.random.uniform(-7, 7)  # Random slope
-    b = np.random.uniform(-5, 5)   # Random intercept
-
-    # Generate x values from -5 to 5
+    m = np.random.uniform(-7, 7)
+    b = np.random.uniform(-5, 5)
     x_values = np.linspace(-5, 5, 100)
-    # Calculate corresponding y values using the linear equation
     y_values = m * x_values + b
-
-    # Create the plot
     plt.figure(figsize=(8, 8))
     plt.plot(x_values, y_values, color='k', linestyle='-')
     m = yplotlimit(x_values, y_values)
-    # Set the limits of the plot
     plt.xlim(-5, 5)
     plt.ylim(-m, m)
-
     plt.xticks([])
     plt.yticks([])
-
-    # Save the plot as a JPG image
     plt.savefig(f'random_line_function_{i + 1}.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
-
-    # Close the plot to free memory
     plt.close()
-
-    # Convert image to matrix
     image_path = f'random_line_function_{i + 1}.jpg'
     matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
-
     with lock:
         progress.value += 1
         print(f"Generated {progress.value} graphs ({graph_type})")
-
     return matrix, "line"
 
 def generate_random_quad_plot(i, progress, lock, graph_type):
@@ -122,11 +131,9 @@ def generate_random_quad_plot(i, progress, lock, graph_type):
     image_path = f'random_quad_function_{i + 1}.jpg'
     matrix = image_to_matrix(image_path, new_size=(250, 250))
     os.remove(image_path)
-
     with lock:
         progress.value += 1
         print(f"Generated {progress.value} graphs ({graph_type})")
-
     return matrix, "quad"
 
 def generate_random_cubic_plot(i, progress, lock, graph_type):
@@ -558,28 +565,16 @@ def generate_random_exp_plot(i, progress, lock, graph_type):
 
     return matrix, "exp"
 
-def image_to_matrix(image_path, new_size=(250, 250)):
-    img = imageio.imread(image_path)
-    img_resized = np.array(Image.fromarray(img).resize(new_size))
-    # Convert to binary matrix: path (black) as 1, background (white) as 0
-    binary_matrix = (img_resized[:, :, 0] < 128).astype(np.uint8)
-    return binary_matrix
-
-def generate_graphs(graph_type, num_graphs, progress, lock, max_workers):
-    results = []
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(graph_type, i, progress, lock, graph_type.__name__) for i in range(num_graphs)]
-        for future in as_completed(futures):
-            results.append(future.result())
-    return results
-
 if __name__ == "__main__":
-    number = int(input("Enter amount of graphs to generate: "))
+    number = int(input("Enter the number of graphs to generate: "))
     start_time = time.time()
 
     manager = Manager()
     progress = manager.Value('i', 0)
     lock = manager.Lock()
+
+    D = []
+    L = []
 
     graph_types = [
         generate_random_line_plot,
@@ -600,7 +595,7 @@ if __name__ == "__main__":
     num_graphs_per_type = number // len(graph_types)
     remainder = number % len(graph_types)
 
-    max_workers = os.cpu_count()  # Dynamically set the number of workers based on available CPU cores
+    max_workers = os.cpu_count()
 
     for graph_type in graph_types:
         results = generate_graphs(graph_type, num_graphs_per_type, progress, lock, max_workers)
@@ -608,7 +603,6 @@ if __name__ == "__main__":
             D.append(matrix)
             L.append(label)
 
-    # Handle the remainder
     for i in range(remainder):
         graph_type = graph_types[i % len(graph_types)]
         results = generate_graphs(graph_type, 1, progress, lock, max_workers)
@@ -616,9 +610,20 @@ if __name__ == "__main__":
             D.append(matrix)
             L.append(label)
 
-    # Save results
-    np.save('Matrices.npy', D)
-    np.save('Labels.npy', L)
-
     elapsed_time = time.time() - start_time
     print(f"Generated {number} graphs in {elapsed_time:.2f} seconds")
+
+    # Load the pre-trained model
+    model = joblib.load('advanced_graph_model.pkl')
+
+    # Extract features from the generated graphs
+    data = np.array(D)
+    labels = np.array(L)
+    feature_data = extract_features(data)  # Pass the 2D binary matrices directly
+
+    # Evaluate the model
+    y_pred = model.predict(feature_data)
+    overall_accuracy = accuracy_score(labels, y_pred)
+    print(f"Overall Model accuracy: {overall_accuracy}")
+
+    evaluate_per_graph_type(model, feature_data, labels)

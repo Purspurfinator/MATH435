@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import imageio.v2 as imageio
 from PIL import Image
-import os  # Import the os module
+import os
 
 def yplotlimit(x, y):
     maxima = []
@@ -26,7 +26,6 @@ def yplotlimit(x, y):
     if minima:
         n = min(minima)
         hasmin = 1
-    
     if hasmax == 1:
         mp = m + (m/20)
     if hasmin == 1:
@@ -46,44 +45,45 @@ def yplotlimit(x, y):
 def image_to_matrix(image_path, new_size=(250, 250)):
     img = imageio.imread(image_path)
     img_resized = np.array(Image.fromarray(img).resize(new_size))
-    # Convert to binary matrix: path (black) as 1, background (white) as 0
-    binary_matrix = (img_resized[:, :, 0] < 128).astype(int)
+    if img_resized.ndim == 3:
+        img_resized = img_resized[:, :, 0]  # Convert to 2D if it's a 3D array
+    binary_matrix = (img_resized < 128).astype(np.uint8)
     return binary_matrix
 
-def generate_random_eighthdeg_plot():
-    a = np.random.uniform(-5, 5)  
-    b = np.random.uniform(-5, 5)   
-    c = np.random.uniform(-5, 5)  
-    d = np.random.uniform(-5, 5)
-    e = np.random.uniform(-5, 5)
-    f = np.random.uniform(-5, 5) 
-    g = np.random.uniform(-5, 5)
-    h = np.random.uniform(-5, 5)
-    j = np.random.uniform(-5, 5)
-    while j == 0:
-        j = np.random.uniform(-5, 5) 
+def generate_random_line_plot():
+    m = np.random.uniform(-7, 7)  # Random slope
+    b = np.random.uniform(-5, 5)   # Random intercept
+
+    # Generate x values from -5 to 5
     x_values = np.linspace(-5, 5, 100)
-    y_values = []
-    for z in x_values:
-        y_values.append(j*(z+a)*(z+b)*(z+c)*(z+d)*(z+e)*(z+f)*(z+g)*(z+h))        
+    # Calculate corresponding y values using the linear equation
+    y_values = m * x_values + b
+
+    # Create the plot
     plt.figure(figsize=(8, 8))
     plt.plot(x_values, y_values, color='k', linestyle='-')
     m = yplotlimit(x_values, y_values)
+    # Set the limits of the plot
     plt.xlim(-5, 5)
     plt.ylim(-m, m)
+
     plt.xticks([])
     plt.yticks([])
-    plt.savefig('test_eighthdeg_function.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+
+    # Save the plot as a JPG image
+    plt.savefig('test_line_function.jpg', format='jpg', bbox_inches='tight', pad_inches=0, dpi=300)
+
+    # Close the plot to free memory
     plt.close()
 
     # Convert image to binary matrix
-    image_path = 'test_eighthdeg_function.jpg'
+    image_path = 'test_line_function.jpg'
     matrix = image_to_matrix(image_path, new_size=(250, 250))
 
     return matrix
 
 if __name__ == "__main__":
-    matrix = generate_random_eighthdeg_plot()
+    matrix = generate_random_line_plot()
     print("Generated graph matrix with shape:", matrix.shape)
     
     # Save the matrix as a text file
